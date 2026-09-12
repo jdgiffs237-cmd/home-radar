@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>home-radar</title>
+<style>
+  :root {
+    --bg: #060d06;
+    --panel: #0b150b;
+    --line: #1d3a1d;
+    --green: #35e05a;
+    --green-dim: #1d7a33;
+    --amber: #ffc44d;
+    --red: #ff6b5e;
+    --text: #b8d8b8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 ui-monospace, Consolas, monospace;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh; padding: 16px;
+  }
+  h1 { font-size: 16px; letter-spacing: 3px; color: var(--green); margin: 4px 0 12px; }
+  #scopeWrap { width: min(92vw, 760px); }
+  canvas { width: 100%; display: block; background: var(--panel);
+           border: 1px solid var(--line); border-radius: 8px; }
+  #bar {
+    width: min(92vw, 760px); display: flex; gap: 16px; flex-wrap: wrap;
+    align-items: center; padding: 10px 2px;
+  }
+  #bar label { cursor: pointer; user-select: none; }
+  #bar input { accent-color: var(--green); }
+  #status { margin-left: auto; color: var(--green-dim); }
+  #warn { width: min(92vw, 760px); color: var(--amber); min-height: 1.5em; }
+  #tracks { width: min(92vw, 760px); border-collapse: collapse; margin-top: 8px; }
+  #tracks td, #tracks th {
+    border-bottom: 1px solid var(--line); padding: 4px 10px; text-align: left;
+  }
+  #tracks th { color: var(--green-dim); font-weight: normal; }
+  button {
+    background: none; border: 1px solid var(--green-dim); color: var(--green);
+    font: inherit; padding: 3px 14px; border-radius: 4px; cursor: pointer;
+  }
+  button:hover { border-color: var(--green); }
+</style>
+</head>
+<body>
+<h1>HOME-RADAR</h1>
+<div id="scopeWrap"><canvas id="scope" width="760" height="440"></canvas></div>
+<div id="bar">
+  <button id="pause">pause</button>
+  <label><input type="checkbox" id="showRaw" checked> raw returns</label>
+  <label><input type="checkbox" id="showDet" checked> detections</label>
+  <label><input type="checkbox" id="showTrk" checked> tracks</label>
+  <span id="status">connecting…</span>
+</div>
+<div id="warn"></div>
+<table id="tracks" hidden>
+  <thead><tr><th>track</th><th>range</th><th>bearing</th><th>speed</th><th>status</th></tr></thead>
+  <tbody></tbody>
+</table>
+
+<script>
+"use strict";
+
+const canvas = document.getElementById("scope");
+const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
+const warnEl = document.getElementById("warn");
+const trackTable = document.getElementById("tracks");
+const trackBody = trackTable.querySelector("tbody");
+
+let cfg = { max_range: 4.0, fov_min: 0, fov_max: 180, step: 5, trail: 4 };
+let trail = [];        // last few sweeps, oldest first
+let latest = null;     // most recent frame payload
+let paused = false;
+
+document.getElementById("pause").onclick = (e) => {
+  paused = !paused;
+  e.target.textContent = paused ? "resume" : "pause";
+};
+
+// --- geometry: radar at bottom centre, angle 0 = right, 90 = straight up ---
+function layout() {
+  const w = canvas.width, h = canvas.height;
+  return { cx: w / 2, cy: h - 30, R: Math.min(w / 2 - 30, h - 70) };
+}
+function toCanvas(angleDeg, rangeM, L) {
+  const a = angleDeg * Math.PI / 180;
+  const rr = (rangeM / cfg.max_range) * L.R;
+  return [L.cx + rr * Math.cos(a), L.cy - rr * Math.sin(a)];
+}
+
+function drawGrid(L) {
+  ctx.strokeStyle = "#1d3a1d";
+  ctx.fillStyle = "#3a6b3a";
+  ctx.lineWidth = 1;
+  ctx.font = "11px ui-monospace, monospace";
+
+  for (let i = 1; i <= 4; i++) {
+    const rr = (i / 4) * L.R;
+    ctx.beginPath();
+    ctx.arc(L.cx, L.cy, rr, Math.PI, 2 * Math.PI);
+    ctx.stroke();
+    ctx.fillText((cfg.max_range * i / 4).toFixed(1) + "m", L.cx + 4, L.cy - rr + 13);
+  }
+  for (let a = cfg.fov_min; a <= cfg.fov_max; a += 30) {
+    const [x, y] = toCanvas(a, cfg.max_range, L);
+    ctx.beginPath();
+    ctx.moveTo(L.cx, L.cy);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    const [lx, ly] = toCanvas(a, cfg.max_range * 1.06, L);
+    ctx.fillText(a + "°", lx - 8, ly + 4);
+  }
+  ctx.beginPath();
+  ctx.moveTo(L.cx - L.R, L.cy);
+  ctx.lineTo(L.cx + L.R, L.cy);
+  ctx.stroke();
+}
+
+function drawSweep(returns, alpha, L) {
+  ctx.fillStyle = `rgba(53, 224, 90, ${alpha})`;
+  for (const p of returns) {
+    if (p.r < 0) continue;                    // miss: nothing came back
+    const [x, y] = toCanvas(p.a, p.r, L);
+    ctx.beginPath();
+    ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+}
+
+function draw() {
+  const L = layout();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid(L);
+  if (!latest) return;
+
+  if (document.getElementById("showRaw").checked) {
+    trail.forEach((sweep, i) => {
+      const alpha = 0.15 + 0.85 * (i + 1) / trail.length;   // fade older sweeps
+      drawSweep(sweep, alpha, L);
+    });
+  }
+
+  if (document.getElementById("showDet").checked) {
+    ctx.strokeStyle = "#ffc44d";
+    ctx.lineWidth = 1.5;
+    for (const d of latest.detections) {
+      const [x, y] = toCanvas(d.a, d.r, L);
+      ctx.strokeRect(x - 5, y - 5, 10, 10);
+    }
+  }
+
+  if (document.getElementById("showTrk").checked) {
+    ctx.font = "12px ui-monospace, monospace";
+    for (const t of latest.tracks) {
+      const color = t.confirmed ? "#ff6b5e" : "#7a5a5a";
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.5;
+
+      if (t.history.length > 1) {
+        ctx.beginPath();
+        t.history.forEach(([hx, hy], i) => {
+          const px = L.cx + (hx / cfg.max_range) * L.R;
+          const py = L.cy - (hy / cfg.max_range) * L.R;
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+      }
+
+      const px = L.cx + (t.x / cfg.max_range) * L.R;
+      const py = L.cy - (t.y / cfg.max_range) * L.R;
+      ctx.beginPath();
+      ctx.arc(px, py, 7, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.fillText("T" + t.id, px + 10, py - 6);
+    }
+  }
+}
+
+function updateTable() {
+  if (!latest || latest.tracks.length === 0) { trackTable.hidden = true; return; }
+  trackTable.hidden = false;
+  trackBody.innerHTML = "";
+  for (const t of latest.tracks) {
+    const row = trackBody.insertRow();
+    row.insertCell().textContent = "T" + t.id;
+    row.insertCell().textContent = t.range.toFixed(2) + " m";
+    row.insertCell().textContent = t.angle.toFixed(0) + "°";
+    row.insertCell().textContent = t.speed.toFixed(2) + " m/s";
+    row.insertCell().textContent = t.confirmed ? "confirmed" : "tentative";
+  }
+}
+
+const es = new EventSource("/events");
+es.onmessage = (ev) => {
+  if (paused) return;
+  const frame = JSON.parse(ev.data);
+  if (frame.frame === -1) {
+    statusEl.textContent = "source ended";
+    return;
+  }
+  if (frame.cfg && frame.cfg.max_range) cfg = frame.cfg;
+  latest = frame;
+  trail.push(frame.returns);
+  while (trail.length > cfg.trail + 1) trail.shift();
+
+  statusEl.textContent = `${frame.source}  ·  frame ${frame.frame}`;
+  warnEl.textContent = frame.warning ? "⚠ " + frame.warning : "";
+  draw();
+  updateTable();
+};
+es.onerror = () => { statusEl.textContent = "disconnected — is run_web.py still running?"; };
+
+draw();
+</script>
+</body>
+</html>

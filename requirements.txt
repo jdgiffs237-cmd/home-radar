@@ -1,0 +1,4 @@
+numpy>=1.24
+matplotlib>=3.7
+pyserial>=3.5      # only needed for run_live.py
+pytest>=7.4        # only needed to grade the exercises
