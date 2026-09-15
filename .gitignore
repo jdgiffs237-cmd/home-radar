@@ -1,8 +1,21 @@
+# personal -- purchase records and invoices carry name/address; keep them local
+receipts/
+
+# python
 __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
 venv/
+
+# recorded sensor sessions can get big; commit them deliberately if wanted
 data/*.log
+
+# images are generated output, except the ones the docs use
 *.png
 !docs/**/*.png
+
+# editor / os noise
+.vscode/
+.DS_Store
+Thumbs.db
