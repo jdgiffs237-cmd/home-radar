@@ -11,15 +11,17 @@
 //     ringing as a phantom echo a few centimetres away.
 //   * Each stored range is the median of 3 pings, so a single corrupted
 //     reading (power sag when the servo strains) gets outvoted.
-// Also add a 100uF+ electrolytic across the breadboard rails (stripe side
-// to GND/blue) to absorb the servo's current spikes at the source.
+// Power the hungry parts (servo/sensor/joystick) from the kit's power supply
+// module + 9V battery feeding the breadboard rails, NOT from the Uno's 5V pin --
+// the servo's current spikes brown out the USB rail and fake close targets.
 //
-// Wiring (power rails on the breadboard, since three modules share 5V/GND):
-//   Uno 5V  -> breadboard red rail       Uno GND -> breadboard blue rail
-//   Capacitor: long leg -> red rail, striped leg -> blue rail
+// Wiring:
+//   Power module -> breadboard rails (both jumpers on 5V), 9V battery in jack
+//   Uno GND  -> blue rail           (common ground -- required)
+//   Uno 5V   -> nothing             (the module powers the rails now)
 //   Servo:    orange -> D9,  red -> red rail,  brown -> blue rail
 //   HC-SR04:  TRIG -> D10, ECHO -> D11, VCC -> red rail, GND -> blue rail
-//   Joystick: VRx -> A0,  +5V -> red rail,  GND -> blue rail
+//   Joystick: VRx -> A0,  +5V -> red rail,  GND -> blue rail  (VRy, SW unused)
 
 #include <Servo.h>
 
@@ -51,6 +53,7 @@ float cells[N_CELLS];             // latest range seen at each bearing
 unsigned long frame = 0;
 unsigned long lastEmit = 0;
 unsigned long lastMove = 0;       // when the head last changed position
+int joyCenter = 512;              // stick's resting reading, measured at boot
 
 void setup() {
   Serial.begin(115200);
@@ -61,6 +64,14 @@ void setup() {
   head.attach(PIN_SERVO);
   head.write((int)angle);
   lastMove = millis();
+
+  // Measure the stick's true resting value instead of assuming 512. The
+  // "centered" reading is half the stick's supply voltage, which depends on
+  // whatever rail feeds it -- so hard-coding 512 breaks the moment the supply
+  // changes. Keep hands OFF the stick during the first second after power-up.
+  long sum = 0;
+  for (int i = 0; i < 16; i++) { sum += analogRead(PIN_JOY_X); delay(5); }
+  joyCenter = sum / 16;
 
   for (int i = 0; i < N_CELLS; i++) cells[i] = -1.0;   // nothing seen yet
 
@@ -122,7 +133,7 @@ void emitFrame() {
 
 void loop() {
   // 1. steer: joystick nudges the beam, rate-controlled like a drone stick
-  int push = analogRead(PIN_JOY_X) - 512;
+  int push = analogRead(PIN_JOY_X) - joyCenter;
   if (abs(push) > DEADZONE) {
     angle += JOY_DIRECTION * (push / 512.0) * MAX_SPEED;
     angle = constrain(angle, 0.0, 180.0);
