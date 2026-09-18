@@ -2,6 +2,7 @@
 """
 Live radar, against the Arduino.
 
+    python run_live.py                           (auto-detects the Arduino)
     python run_live.py --port COM3
     python run_live.py --port COM3 --record data/kitchen.log
     python run_live.py --replay data/kitchen.log
@@ -24,16 +25,38 @@ from radar.serial_link import SerialRadar, replay
 from radar.track import Tracker
 
 
+def find_arduino_port() -> str | None:
+    """First port that looks like an Arduino; if exactly one port exists, that."""
+    from serial.tools import list_ports
+
+    ports = list(list_ports.comports())
+    for port in ports:
+        desc = (port.description or "").lower()
+        if "arduino" in desc or "ch340" in desc or "usb serial" in desc:
+            return port.device
+    if len(ports) == 1:
+        return ports[0].device
+    return None
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Live scanning radar")
-    src = p.add_mutually_exclusive_group(required=True)
-    src.add_argument("--port", help="serial port, e.g. COM3 or /dev/ttyUSB0")
+    src = p.add_mutually_exclusive_group()
+    src.add_argument("--port", help="serial port, e.g. COM3 or /dev/ttyUSB0 "
+                                    "(default: auto-detect the Arduino)")
     src.add_argument("--replay", help="replay a recorded .log instead")
     p.add_argument("--record", help="write raw serial to this file while running")
     p.add_argument("--ascii", action="store_true")
     p.add_argument("--no-clutter-map", action="store_true")
     p.add_argument("--frames", type=int, default=0)
     args = p.parse_args()
+
+    if not args.port and not args.replay:
+        args.port = find_arduino_port()
+        if args.port is None:
+            p.error("no Arduino found -- plug it in, or give --port "
+                    "(python -m serial.tools.list_ports shows what's connected)")
+        print(f"auto-detected Arduino on {args.port}")
 
     clutter = None if args.no_clutter_map else ClutterMap()
     tracker = Tracker()
