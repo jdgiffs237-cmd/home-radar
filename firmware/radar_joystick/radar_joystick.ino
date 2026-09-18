@@ -71,14 +71,23 @@ void setup() {
   // changes. Keep hands OFF the stick during the first second after power-up.
   long sum = 0;
   for (int i = 0; i < 16; i++) { sum += analogRead(PIN_JOY_X); delay(5); }
-  joyCenter = sum / 16;
+  int measured = sum / 16;
+  // Only trust a plausibly-centered reading. If the stick was held (or a wire
+  // is loose) at boot, the value is nonsense -- fall back to the nominal 512 so
+  // a bad calibration can never brick steering.
+  joyCenter = (measured > 400 && measured < 624) ? measured : 512;
 
   for (int i = 0; i < N_CELLS; i++) cells[i] = -1.0;   // nothing seen yet
 
   Serial.print(F("# radar_joystick v2 fov=180 step="));
   Serial.print(STEP_DEG);
   Serial.print(F(" c="));
-  Serial.println(SPEED_OF_SOUND, 1);
+  Serial.print(SPEED_OF_SOUND, 1);
+  Serial.print(F(" joyCenter="));
+  Serial.print(joyCenter);
+  Serial.print(F(" (measured "));
+  Serial.print(measured);
+  Serial.println(F(")"));
 }
 
 // One ping. Range in metres, or -1.0 for no echo.
