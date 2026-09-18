@@ -15,6 +15,13 @@ data/*.log
 *.png
 !docs/**/*.png
 
+# personal build photos / videos -- keep them local, they show the room
+*.jpg
+*.jpeg
+*.mov
+*.mp4
+!docs/**/*.jpg
+
 # editor / os noise
 .vscode/
 .DS_Store
