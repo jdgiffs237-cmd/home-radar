@@ -1,0 +1,223 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/artifact/CK6PiFb3vQDs4t2XF582Bn -->
+<title>Amp Check</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #eef1ea;
+    --panel: #f7f9f4;
+    --line: #cdd6c6;
+    --ink: #1e281e;
+    --muted: #5c6b58;
+    --accent: #256e33;
+    --accent-soft: #dcead9;
+    --amber: #8a5a00;
+    --amber-soft: #f2e5c8;
+    --red: #a03c2a;
+    --red-soft: #f0ddd6;
+    --w-red: #c43c2c;
+    --w-gray: #7d8a79;
+    --meter: #8a5a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b110b;
+      --panel: #121a12;
+      --line: #24331f;
+      --ink: #cfe0c6;
+      --muted: #7e937a;
+      --accent: #4fc763;
+      --accent-soft: #16301a;
+      --amber: #e0a93f;
+      --amber-soft: #2e2410;
+      --red: #e0705c;
+      --red-soft: #331812;
+      --w-red: #ef6a58;
+      --w-gray: #93a190;
+      --meter: #e0a93f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b110b;
+    --panel: #121a12;
+    --line: #24331f;
+    --ink: #cfe0c6;
+    --muted: #7e937a;
+    --accent: #4fc763;
+    --accent-soft: #16301a;
+    --amber: #e0a93f;
+    --amber-soft: #2e2410;
+    --red: #e0705c;
+    --red-soft: #331812;
+    --w-red: #ef6a58;
+    --w-gray: #93a190;
+    --meter: #e0a93f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.55; margin: 0; padding: 28px 18px 60px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  h1 { font-family: "Chakra Petch", sans-serif; font-size: clamp(26px, 5vw, 36px); margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 18px; max-width: 64ch; }
+  h2 { font-family: "Chakra Petch", sans-serif; font-size: 19px; margin: 0 0 8px; }
+
+  .safety {
+    border: 1px solid var(--red); background: var(--red-soft); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 22px;
+  }
+  .safety h2 { color: var(--red); font-size: 15px; letter-spacing: .05em; text-transform: uppercase; }
+  .safety ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+  .safety li { margin-bottom: 5px; }
+
+  figure { margin: 0 0 24px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 16px 12px 6px; overflow-x: auto; }
+  svg { max-width: 100%; height: auto; display: block; margin: 0 auto; color: var(--ink); }
+  figcaption { font-size: 13.5px; color: var(--muted); text-align: center; padding: 8px 12px 8px; max-width: 70ch; margin: 0 auto; }
+
+  table { border-collapse: collapse; width: 100%; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+  th { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td:nth-child(2) { font-family: "IBM Plex Mono", monospace; }
+  tr:last-child td { border-bottom: none; }
+  .why {
+    margin-top: 16px; background: var(--accent-soft); border: 1px solid var(--accent);
+    border-radius: 10px; padding: 12px 16px; font-size: 14.5px; max-width: 70ch;
+  }
+  .why b { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <h1>Amp Check</h1>
+  <p class="sub">Two measurements with the multimeter: how much current the <b>motor</b> eats,
+    vs how much the <b>Arduino</b> itself sips. The trick both times: current is measured
+    <b>in series</b> — the meter becomes part of the wire, so electricity flows <i>through</i> it.</p>
+
+  <div class="safety">
+    <h2>⚠ Before touching the dial</h2>
+    <ul>
+      <li>Move the red probe to the <b>10A socket</b> on the meter (not the mA one — the motor's
+        current can blow the mA fuse). Dial to <b>DC amps (A⎓)</b>.</li>
+      <li>The meter goes <b>in the middle of a broken wire</b> — never across two power pins.
+        Across = short circuit = blown fuse (or worse).</li>
+      <li>When you're done, move the red probe <b>back to the V socket</b>. Leaving it on 10A
+        and later measuring a battery's voltage is the classic way to kill a meter.</li>
+    </ul>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 900 400" role="img"
+         aria-label="Test 1: multimeter in series between the Arduino 5V pin and the ULN2003 plus terminal, measuring motor current. All other wiring unchanged. Expected reading about 0.24 amps.">
+      <text x="30" y="40" font-family="Chakra Petch, sans-serif" font-size="18" font-weight="700" fill="var(--accent)">TEST 1 · current to the MOTOR</text>
+      <text x="30" y="60" font-size="12" fill="var(--muted)">everything powered from USB, exactly as it works now — one red wire gets the meter spliced in</text>
+
+      <!-- Arduino -->
+      <rect x="30" y="120" width="190" height="200" rx="10" fill="none" stroke="currentColor" stroke-width="2"/>
+      <text x="125" y="152" font-family="Chakra Petch, sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="currentColor">ARDUINO UNO</text>
+      <text x="125" y="170" font-size="10" text-anchor="middle" fill="var(--muted)">on USB power</text>
+      <circle cx="220" cy="200" r="4" fill="var(--w-red)"/><text x="205" y="204" font-size="12" text-anchor="end" font-family="IBM Plex Mono, monospace" fill="currentColor">5V</text>
+      <circle cx="220" cy="240" r="4" fill="var(--w-gray)"/><text x="205" y="244" font-size="12" text-anchor="end" font-family="IBM Plex Mono, monospace" fill="currentColor">GND</text>
+      <circle cx="220" cy="280" r="4" fill="currentColor"/><text x="205" y="284" font-size="12" text-anchor="end" font-family="IBM Plex Mono, monospace" fill="currentColor">D2–D5</text>
+
+      <!-- Meter -->
+      <rect x="360" y="90" width="180" height="130" rx="12" fill="none" stroke="var(--meter)" stroke-width="2.5"/>
+      <rect x="380" y="110" width="140" height="42" rx="5" fill="var(--amber-soft)" stroke="var(--meter)" stroke-width="1"/>
+      <text x="450" y="139" font-family="IBM Plex Mono, monospace" font-size="21" font-weight="500" text-anchor="middle" fill="var(--amber)">0.24 A</text>
+      <text x="450" y="176" font-family="Chakra Petch, sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="var(--meter)">MULTIMETER</text>
+      <text x="450" y="193" font-size="10" text-anchor="middle" fill="var(--muted)">dial: A⎓ · red probe in 10A socket</text>
+      <circle cx="400" cy="220" r="5" fill="var(--w-red)"/><text x="400" y="242" font-size="10" text-anchor="middle" fill="var(--muted)">10A</text>
+      <circle cx="500" cy="220" r="5" fill="currentColor"/><text x="500" y="242" font-size="10" text-anchor="middle" fill="var(--muted)">COM</text>
+
+      <!-- ULN2003 -->
+      <rect x="660" y="120" width="180" height="200" rx="10" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <text x="750" y="152" font-family="Chakra Petch, sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="var(--accent)">ULN2003</text>
+      <text x="750" y="170" font-size="10" text-anchor="middle" fill="var(--muted)">motor in its socket</text>
+      <circle cx="660" cy="200" r="4" fill="var(--w-red)"/><text x="672" y="204" font-size="12" font-family="IBM Plex Mono, monospace" fill="currentColor">+ (5V)</text>
+      <circle cx="660" cy="240" r="4" fill="var(--w-gray)"/><text x="672" y="244" font-size="12" font-family="IBM Plex Mono, monospace" fill="currentColor">− (GND)</text>
+      <circle cx="660" cy="280" r="4" fill="currentColor"/><text x="672" y="284" font-size="12" font-family="IBM Plex Mono, monospace" fill="currentColor">IN1–IN4</text>
+
+      <!-- wires: 5V -> meter 10A, meter COM -> ULN + -->
+      <polyline points="224,200 320,200 320,260 400,260 400,225" fill="none" stroke="var(--w-red)" stroke-width="2.5"/>
+      <polyline points="500,225 500,260 580,260 580,200 656,200" fill="none" stroke="var(--w-red)" stroke-width="2.5"/>
+      <text x="290" y="192" font-size="11" fill="var(--w-red)">the broken wire, rejoined THROUGH the meter</text>
+
+      <!-- unchanged wires -->
+      <line x1="224" y1="240" x2="656" y2="240" stroke="var(--w-gray)" stroke-width="2.5"/>
+      <text x="440" y="256" font-size="10" fill="var(--w-gray)">GND — unchanged</text>
+      <line x1="224" y1="280" x2="656" y2="280" stroke="currentColor" stroke-width="2.5" opacity="0.5"/>
+      <text x="440" y="296" font-size="10" fill="var(--muted)">D2–D5 signal wires — unchanged</text>
+
+      <text x="30" y="368" font-size="12" fill="var(--muted)">expect: ~0.20–0.30 A while the motor holds or steps · near 0 A only if the coils are released</text>
+    </svg>
+    <figcaption>Test 1 — unplug the red wire that feeds the ULN2003's «+», and reconnect it
+      through the meter: 5V pin → red probe, black probe → «+». The meter now counts every
+      electron the motor takes.</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 900 400" role="img"
+         aria-label="Test 2: external power. The multimeter sits in series between the power module's 5V output and the ULN2003 plus terminal, measuring the current the battery or adapter delivers to the motor. The Arduino stays on USB and shares ground. A healthy supply reads about 0.24 amps; a sagging battery reads less with a dim module light.">
+      <text x="30" y="40" font-family="Chakra Petch, sans-serif" font-size="18" font-weight="700" fill="var(--accent)">TEST 2 · same motor, EXTERNAL power</text>
+      <text x="30" y="60" font-size="12" fill="var(--muted)">the meter now counts what the battery / adapter actually delivers — the supply's report card</text>
+
+      <!-- Power module -->
+      <rect x="30" y="120" width="185" height="120" rx="10" fill="none" stroke="var(--w-red)" stroke-width="2"/>
+      <text x="122" y="152" font-family="Chakra Petch, sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="var(--w-red)">POWER MODULE</text>
+      <text x="122" y="170" font-size="10" text-anchor="middle" fill="var(--muted)">jumper on 5V</text>
+      <text x="122" y="184" font-size="10" text-anchor="middle" fill="var(--muted)">battery / adapter in the jack</text>
+      <circle cx="215" cy="205" r="4" fill="var(--w-red)"/><text x="200" y="209" font-size="12" text-anchor="end" font-family="IBM Plex Mono, monospace" fill="currentColor">+5V</text>
+      <circle cx="215" cy="230" r="4" fill="var(--w-gray)"/><text x="200" y="234" font-size="12" text-anchor="end" font-family="IBM Plex Mono, monospace" fill="currentColor">GND</text>
+
+      <!-- Meter -->
+      <rect x="360" y="90" width="180" height="130" rx="12" fill="none" stroke="var(--meter)" stroke-width="2.5"/>
+      <rect x="380" y="110" width="140" height="42" rx="5" fill="var(--amber-soft)" stroke="var(--meter)" stroke-width="1"/>
+      <text x="450" y="139" font-family="IBM Plex Mono, monospace" font-size="21" font-weight="500" text-anchor="middle" fill="var(--amber)">0.24 A</text>
+      <text x="450" y="176" font-family="Chakra Petch, sans-serif" font-size="13" font-weight="600" text-anchor="middle" fill="var(--meter)">MULTIMETER</text>
+      <text x="450" y="193" font-size="10" text-anchor="middle" fill="var(--muted)">dial: A⎓ · red probe in 10A socket</text>
+      <circle cx="400" cy="220" r="5" fill="var(--w-red)"/><text x="400" y="242" font-size="10" text-anchor="middle" fill="var(--muted)">10A</text>
+      <circle cx="500" cy="220" r="5" fill="currentColor"/><text x="500" y="242" font-size="10" text-anchor="middle" fill="var(--muted)">COM</text>
+
+      <!-- ULN2003 -->
+      <rect x="660" y="120" width="180" height="160" rx="10" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <text x="750" y="152" font-family="Chakra Petch, sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="var(--accent)">ULN2003 + motor</text>
+      <circle cx="660" cy="185" r="4" fill="var(--w-red)"/><text x="672" y="189" font-size="12" font-family="IBM Plex Mono, monospace" fill="currentColor">+ (5V)</text>
+      <circle cx="660" cy="220" r="4" fill="var(--w-gray)"/><text x="672" y="224" font-size="12" font-family="IBM Plex Mono, monospace" fill="currentColor">− (GND)</text>
+      <circle cx="660" cy="255" r="4" fill="currentColor"/><text x="672" y="259" font-size="12" font-family="IBM Plex Mono, monospace" fill="currentColor">IN1–IN4 (from D2–D5)</text>
+
+      <!-- wires: module +5V -> meter -> ULN + -->
+      <polyline points="219,205 320,205 320,260 400,260 400,225" fill="none" stroke="var(--w-red)" stroke-width="2.5"/>
+      <polyline points="500,225 500,260 580,260 580,185 656,185" fill="none" stroke="var(--w-red)" stroke-width="2.5"/>
+      <text x="240" y="197" font-size="11" fill="var(--w-red)">battery's output, rejoined THROUGH the meter</text>
+
+      <!-- grounds -->
+      <polyline points="219,230 300,230 300,320 620,320 620,220 656,220" fill="none" stroke="var(--w-gray)" stroke-width="2.5"/>
+      <text x="330" y="336" font-size="10" fill="var(--w-gray)">shared ground rail — module + ULN2003 + Arduino GND all join it</text>
+      <text x="30" y="320" font-size="11" fill="var(--muted)">Arduino stays on USB,</text>
+      <text x="30" y="334" font-size="11" fill="var(--muted)">signals D2–D5 as normal,</text>
+      <text x="30" y="348" font-size="11" fill="var(--muted)">its GND tied to the rail</text>
+
+      <text x="30" y="382" font-size="12" fill="var(--muted)">healthy supply: same ~0.24 A as Test 1 · sagging battery: LESS current + dim module light + buzzing motor</text>
+    </svg>
+    <figcaption>Test 2 — identical idea to Test 1, but the broken-and-rejoined wire is the power
+      module's +5V feed to the driver. Now the meter is grading the battery: can it actually
+      deliver what the motor asks for?</figcaption>
+  </figure>
+
+  <h2>What the numbers say</h2>
+  <table>
+    <tr><th>Measurement</th><th>Reading</th><th>Meaning</th></tr>
+    <tr><td>Test 1 — motor on Uno 5V</td><td>0.24 A ✓ measured!</td><td>Textbook 28BYJ-48 draw. The motor and wiring are healthy.</td></tr>
+    <tr><td>Test 2 — motor on external power, good supply</td><td>~0.24 A</td><td>Supply keeps up: same current, bright module light, clean stepping.</td></tr>
+    <tr><td>Test 2 — motor on external power, weak battery</td><td>noticeably less</td><td>Voltage sagging under load: dim light, buzzing, no rotation — your dead 9V, quantified.</td></tr>
+  </table>
+
+  <div class="why"><b>The takeaway:</b> the motor wants ~0.24 A <i>all the time</i> — even
+    holding still, because the driver keeps the coils energized. A supply that can't sustain
+    that sags, and you saw exactly what that looks like: dim light, buzz, no motion. Same
+    wiring, same motor, same code — the only variable was the supply. That's real
+    electrical debugging.</div>
+</div>

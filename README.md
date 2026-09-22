@@ -1,89 +1,77 @@
 # home-radar
 
-A learn-by-building radar project. Phase 1 is a servo-scanned rangefinder on your
-desk that behaves like a radar: it sweeps a beam, gates returns by range, plots a
-PPI scope, decides what's a target and what's noise, and tracks targets frame to
-frame. Phase 2 swaps the sensor for real RF hardware without rewriting the
-software.
+A working radar system built from a $50 Arduino kit — and the signal
+processing to make sense of what it hears. A motorized ultrasonic sensor
+sweeps the room; Python turns the echoes into a live radar scope with
+CFAR detection, clustering, and multi-target tracking.
 
-## Be clear-eyed about what this is
+Built as a learn-by-doing project: every algorithm was written against a
+physics-based simulator first, then run against real hardware, and every
+hardware decision (motor choice, power budget) was made by measuring, not
+guessing — multimeter readings and all. The build diary is in
+[BUILDLOG.md](BUILDLOG.md).
 
-An ultrasonic rangefinder is **not** radar. It's sound, not RF; it's ~340 m/s,
-not 3×10⁸; the beam is wide and sloppy; there's no phase, no coherent
-integration, no Doppler.
+## Two generations
 
-What *does* transfer, and it's most of the hard part:
+```
+1.0/   servo-scanned    SG90 servo + HC-SR04 ultrasonic, full software stack
+2.0/   stepper-scanned  28BYJ-48 stepper (~0.18°/step), same protocol -- the
+                        entire 1.0 software stack works against it unchanged
+```
 
-| Concept | Same in this build | Same in real radar |
-|---|---|---|
-| Pulse → echo → time-of-flight → range | ✅ | ✅ |
-| Range resolution set by pulse width | ✅ | ✅ |
-| Angular resolution set by beamwidth | ✅ | ✅ |
-| Scan pattern, frame rate, revisit time | ✅ | ✅ |
-| Clutter, multipath, ghost returns | ✅ | ✅ |
-| Detection thresholding / CFAR | ✅ | ✅ |
-| Plot-to-track association, filtering | ✅ | ✅ |
-| Doppler / range-Doppler maps | ❌ | ✅ |
-| Coherent integration, phase, MTI | ❌ | ✅ |
+The 2.0 hardware swap required **zero Python changes** — the firmware was
+designed to speak the same serial protocol, so the display, detection, and
+tracking pipeline never knew the motor changed. That protocol stability
+was a deliberate design goal.
 
-The included simulator (`radar/sim.py`) also has an FMCW mode that fakes Doppler,
-so you can write range-Doppler code before you own a radar that produces it.
+## What's inside
 
-## You can start right now, with no hardware
+- **Firmware (C++/Arduino)** — auto-sweeping and joystick-steered variants;
+  median-of-N ping filtering; search/track ping modes borrowed from how
+  real radars split the problem; stepper coil power management
+- **Signal processing (Python/NumPy)** — CA-CFAR adaptive detection,
+  detection clustering, temporal clutter mapping, alpha-beta tracking
+  filter with gating and track lifecycle *(detection/tracking modules are
+  structured as exercises — partially complete, by design: this is a
+  learning project and the docs explain each algorithm before you write it)*
+- **Physics simulator** — synthetic rooms with R⁴ falloff, beamwidth
+  smearing, multipath ghosts, and dropouts, so the whole chain runs and
+  is testable with no hardware attached
+- **Two displays** — a matplotlib PPI scope, and a zero-dependency web
+  scope (stdlib HTTP + Server-Sent Events + canvas)
+- **Docs** — radar fundamentals written for beginners, glossary, hardware
+  build guides, wiring diagrams, and a pytest suite that grades the
+  exercises
+
+## Quick start (no hardware needed)
 
 ```bash
+cd 1.0
 pip install -r requirements.txt
-python run_sim.py            # synthetic targets, live PPI scope
-python run_web.py            # same thing, but the scope is a browser page
-pytest -q                    # the exercises. they fail. that's the point.
+python run_sim.py        # simulated radar, matplotlib scope
+python run_web.py        # same, in your browser
 ```
 
-`run_sim.py` generates a world of moving targets and feeds your code the same
-data structures the Arduino will feed it later. Everything you write against the
-sim works unchanged against hardware.
+With the hardware built (see `1.0/docs/03-hardware-build.md` or
+`2.0/docs/stepper-wiring.html`):
 
-## Layout
-
-```
-docs/           read these in order
-firmware/       Arduino sketch: sweep the servo, ping, print CSV
-radar/
-  config.py     one place for every tunable number
-  scan.py       Sweep / Return / Detection / Track data structures  [done]
-  sim.py        synthetic target world + sensor noise model          [done]
-  serial_link.py  read CSV sweeps off the Arduino                    [done]
-  display.py    PPI scope (the round green sweep display)            [done]
-  webserver.py  streams sweeps to the browser scope                  [done]
-  detect.py     thresholding, CFAR, clustering        >>> YOUR JOB <<<
-  track.py      association + alpha-beta filter       >>> YOUR JOB <<<
-tests/          pytest suite that grades detect.py and track.py
-examples/       fmcw_range_doppler.py -- the two-FFT chain real radar runs
-web/            the browser scope page run_web.py serves
-run_sim.py      simulated radar, no hardware needed
-run_live.py     same thing, real sensor
-run_web.py      either source, displayed in your browser (also --replay)
+```bash
+cd 2.0
+python run_radar.py      # auto-detects the Arduino, opens the web scope
 ```
 
-Infrastructure is written for you. The signal processing is not — those are
-exercises with docstrings that spell out the algorithm and tests that tell you
-when you got it right. Solutions are in `docs/solutions/` if you want to unblock
-yourself, but the tests are more useful.
+## Repo map
 
-## Order of operations
-
-1. `docs/01-radar-fundamentals.md` — the five equations you actually need
-2. `python run_sim.py` — watch the scope, get a feel for the data
-3. `pytest -q` — see what's broken, fix `detect.py`
-4. Order parts (`docs/02-bill-of-materials.md`, ~$35)
-5. Build it (`docs/03-hardware-build.md`), run `run_live.py`
-6. Fix `track.py` — real returns are messy enough to make tracking necessary
-7. `docs/04-going-real-rf.md` — where to spend the next $50
-
-## Legal note, since you'll ask eventually
-
-Nothing in Phase 1 transmits RF. When you get to Phase 2: receive-only SDR work
-(ADS-B, passive radar off FM broadcast towers) is unrestricted in the US.
-Transmitting is not — but the hobby modules people use (HB100, TI IWR/AWR eval
-boards, 24 GHz and 60 GHz sensors) ship FCC-certified for exactly this, and
-operating one as intended is fine. Don't build your own transmitter and don't
-point anything at aircraft.
+```
+BUILDLOG.md      the build diary -- what happened, in order
+1.0/
+  radar/         the processing chain: scan -> detect -> track -> display
+  firmware/      Arduino sketches (servo sweep, joystick-steered)
+  docs/          fundamentals, glossary, build guides, visual explainers
+  tests/         pytest suite for the detection/tracking exercises
+  run_sim.py     simulator | run_live.py hardware | run_web.py browser
+2.0/
+  firmware/      stepper sweep + joystick-steered stepper
+  debug/         hardware bring-up sketches and current-measurement notes
+  run_radar.py   one-command radar: find the board, open the scope
+```

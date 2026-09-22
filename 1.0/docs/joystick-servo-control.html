@@ -1,0 +1,418 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/code/artifact/7435a01d-c50d-4bdc-baa7-adfc44c06569 -->
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Joystick Servo Control</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #eef1ea; --panel: #f7f9f4; --panel2: #e4e9df; --line: #cdd6c6;
+    --ink: #1e281e; --muted: #5c6b58;
+    --accent: #256e33; --accent-soft: #dcead9;
+    --amber: #8a5a00; --amber-soft: #f2e5c8;
+    --w-5v: #c23a28; --w-gnd: #6b6b6b; --w-sig: #b06a1f; --w-x: #2563c7; --w-echo: #7c4dbe;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+      --ink: #cfe0c6; --muted: #7e937a;
+      --accent: #4fc763; --accent-soft: #16301a;
+      --amber: #e0a93f; --amber-soft: #2e2410;
+      --w-5v: #e0604c; --w-gnd: #9a9a9a; --w-sig: #d89a54; --w-x: #6d9eec; --w-echo: #a983e0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+    --ink: #cfe0c6; --muted: #7e937a;
+    --accent: #4fc763; --accent-soft: #16301a;
+    --amber: #e0a93f; --amber-soft: #2e2410;
+    --w-5v: #e0604c; --w-gnd: #9a9a9a; --w-sig: #d89a54; --w-x: #6d9eec; --w-echo: #a983e0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 15.5px; line-height: 1.6; margin: 0; padding: 28px 18px 72px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: "Chakra Petch", sans-serif; font-size: clamp(26px, 5vw, 36px);
+    font-weight: 700; margin: 2px 0 4px; text-wrap: balance;
+  }
+  .sub { color: var(--muted); max-width: 62ch; margin: 0 0 22px; }
+  section {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px 22px; margin-bottom: 18px;
+  }
+  h2 {
+    font-family: "Chakra Petch", sans-serif; font-size: 18px; font-weight: 600;
+    margin: 0 0 10px;
+  }
+  p { max-width: 68ch; margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 20px; }
+  li { margin-bottom: 6px; max-width: 64ch; }
+  code {
+    font-family: "IBM Plex Mono", monospace; font-size: .9em;
+    background: var(--panel2); border: 1px solid var(--line);
+    padding: 1px 6px; border-radius: 4px;
+  }
+  .tip {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    border-radius: 0 8px 8px 0; padding: 9px 13px; margin: 12px 0; font-size: 14px;
+  }
+  .note {
+    border-left: 3px solid var(--amber); background: var(--amber-soft);
+    border-radius: 0 8px 8px 0; padding: 9px 13px; margin: 12px 0; font-size: 14px;
+  }
+  figure { margin: 14px 0 4px; overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; max-width: 68ch; }
+  table { border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+  th {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  }
+  td { font-family: "IBM Plex Mono", monospace; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">home-radar · project 2</div>
+    <h1>Joystick Servo Control</h1>
+    <p class="sub">Two levels, both on battery power. Level 1: the stick drives the servo,
+      nothing else — a playground for the steering code. Level 2: add the sensor and
+      hand-steer a live radar beam (<code>radar_joystick.ino</code> v3: paints while you
+      pan, filters while you park).</p>
+  </header>
+
+  <section>
+    <h2>Level 1 · stick + servo, battery powered</h2>
+    <p>Firmware: <code>firmware/joystick_servo/joystick_servo.ino</code>. The power module
+      feeds the breadboard rails from the 9V battery; the servo and joystick drink from the
+      rails; the Uno stays on USB and shares only its ground. (If the HC-SR04 is already
+      wired in from Level 2, leave it — this sketch simply ignores it.)</p>
+
+    <figure>
+      <svg viewBox="0 0 900 530" role="img" aria-label="Level 1 wiring: the power module, fed by a 9V battery and set to 5V, feeds the breadboard's red and blue rails. The joystick and servo take power from the rails. Joystick VRx goes to Uno A0, servo orange to D9. Uno GND connects to the blue rail as common ground; the Uno's 5V pin connects to nothing.">
+        <!-- Joystick -->
+        <rect x="90" y="50" width="160" height="90" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="170" cy="92" r="27" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="170" cy="92" r="11" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="170" y="40" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="13.5" font-weight="600" fill="currentColor">Joystick</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10">
+          <rect x="106" y="140" width="7" height="7" fill="var(--w-gnd)"/>
+          <rect x="136" y="140" width="7" height="7" fill="var(--w-5v)"/>
+          <rect x="166" y="140" width="7" height="7" fill="var(--w-x)"/>
+          <rect x="196" y="140" width="7" height="7" fill="currentColor" opacity="0.3"/>
+          <rect x="226" y="140" width="7" height="7" fill="currentColor" opacity="0.3"/>
+          <text x="109" y="162" fill="var(--w-gnd)" transform="rotate(45 109 162)">GND</text>
+          <text x="139" y="162" fill="var(--w-5v)" transform="rotate(45 139 162)">+5V</text>
+          <text x="169" y="162" fill="var(--w-x)" transform="rotate(45 169 162)">VRx</text>
+          <text x="199" y="162" fill="currentColor" opacity="0.55" transform="rotate(45 199 162)">VRy ·unused</text>
+          <text x="229" y="162" fill="currentColor" opacity="0.55" transform="rotate(45 229 162)">SW ·unused</text>
+        </g>
+
+        <!-- Servo -->
+        <rect x="520" y="50" width="140" height="90" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="572" y="30" width="14" height="20" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <line x1="579" y1="30" x2="615" y2="16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <text x="590" y="110" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="13.5" font-weight="600" fill="currentColor">SG90 servo</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10">
+          <rect x="536" y="140" width="7" height="7" fill="var(--w-gnd)"/>
+          <rect x="566" y="140" width="7" height="7" fill="var(--w-5v)"/>
+          <rect x="596" y="140" width="7" height="7" fill="var(--w-sig)"/>
+          <text x="539" y="162" fill="var(--w-gnd)" transform="rotate(45 539 162)">brown</text>
+          <text x="569" y="162" fill="var(--w-5v)" transform="rotate(45 569 162)">red</text>
+          <text x="599" y="162" fill="var(--w-sig)" transform="rotate(45 599 162)">orange</text>
+        </g>
+
+        <!-- Breadboard power rails -->
+        <rect x="55" y="232" width="740" height="13" rx="3" fill="var(--w-5v)" opacity="0.28"/>
+        <rect x="55" y="262" width="740" height="13" rx="3" fill="var(--w-gnd)" opacity="0.28"/>
+        <text x="735" y="228" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--w-5v)">+5V rail</text>
+        <text x="735" y="290" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--w-gnd)">GND rail</text>
+
+        <!-- Power Supply Module + battery -->
+        <rect x="805" y="205" width="90" height="100" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="850" y="196" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="13" font-weight="600" fill="currentColor">Power module</text>
+        <text x="850" y="228" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor">jumpers → 5V</text>
+        <line x1="805" y1="238" x2="795" y2="238" stroke="var(--w-5v)" stroke-width="4"/>
+        <line x1="805" y1="268" x2="795" y2="268" stroke="var(--w-gnd)" stroke-width="4"/>
+        <rect x="815" y="330" width="70" height="42" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="850" y="356" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="currentColor">9V batt</text>
+        <polyline points="850,330 850,305" fill="none" stroke="currentColor" stroke-width="2.2"/>
+        <text x="862" y="322" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity="0.75">barrel plug</text>
+
+        <!-- power drops to rails -->
+        <polyline points="139,147 139,232" fill="none" stroke="var(--w-5v)" stroke-width="2.4"/>
+        <polyline points="569,147 569,232" fill="none" stroke="var(--w-5v)" stroke-width="2.4"/>
+        <polyline points="109,147 109,262" fill="none" stroke="var(--w-gnd)" stroke-width="2.4"/>
+        <polyline points="539,147 539,262" fill="none" stroke="var(--w-gnd)" stroke-width="2.4"/>
+
+        <!-- common ground to the Uno; its 5V pin stays EMPTY -->
+        <polyline points="340,275 340,386" fill="none" stroke="var(--w-gnd)" stroke-width="2.6"/>
+        <text x="330" y="470" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="var(--w-gnd)">common ground →</text>
+        <text x="248" y="405" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="var(--w-5v)" text-anchor="end">5V pin: EMPTY</text>
+        <line x1="252" y1="401" x2="302" y2="392" stroke="var(--w-5v)" stroke-width="1" stroke-dasharray="3 2"/>
+
+        <!-- Arduino -->
+        <rect x="290" y="390" width="200" height="110" rx="8" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <text x="390" y="455" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="16" font-weight="600" fill="currentColor">Arduino Uno</text>
+        <text x="390" y="475" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.75">USB → PC</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600">
+          <rect x="306" y="386" width="8" height="8" fill="var(--w-5v)"/>
+          <rect x="336" y="386" width="8" height="8" fill="var(--w-gnd)"/>
+          <rect x="376" y="386" width="8" height="8" fill="var(--w-x)"/>
+          <rect x="406" y="386" width="8" height="8" fill="var(--w-sig)"/>
+          <text x="310" y="412" text-anchor="middle" fill="var(--w-5v)">5V</text>
+          <text x="340" y="412" text-anchor="middle" fill="var(--w-gnd)">GND</text>
+          <text x="380" y="412" text-anchor="middle" fill="var(--w-x)">A0</text>
+          <text x="410" y="412" text-anchor="middle" fill="var(--w-sig)">D9</text>
+        </g>
+
+        <!-- signal wires (bypass the rails) -->
+        <polyline points="169,147 169,330 380,330 380,386" fill="none" stroke="var(--w-x)" stroke-width="2.4"/>
+        <polyline points="599,147 599,360 410,360 410,386" fill="none" stroke="var(--w-sig)" stroke-width="2.4"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600">
+          <text x="200" y="325" fill="var(--w-x)">VRx → A0</text>
+          <text x="440" y="356" fill="var(--w-sig)">orange → D9</text>
+        </g>
+      </svg>
+      <figcaption>Battery → power module → rails → servo and joystick. The Uno's GND joins
+        the blue rail (common ground — required); its 5V pin stays empty. Two signal wires run
+        straight to the Uno: VRx to A0, servo orange to D9.</figcaption>
+    </figure>
+
+    <table>
+      <tr><th>Module · pin</th><th>Goes to</th></tr>
+      <tr><td>Power module</td><td>snaps onto rail end (+→red, −→blue), jumpers on 5V</td></tr>
+      <tr><td>9V battery</td><td>power module barrel jack, switch ON (check the LED)</td></tr>
+      <tr><td>Joystick +5V / GND</td><td>red rail / blue rail</td></tr>
+      <tr><td>Joystick VRx</td><td>A0 (VRy, SW unused)</td></tr>
+      <tr><td>Servo red / brown</td><td>red rail / blue rail</td></tr>
+      <tr><td>Servo orange</td><td>D9</td></tr>
+      <tr><td>Uno GND</td><td>blue rail (common ground — required)</td></tr>
+      <tr><td>Uno 5V</td><td>NOTHING — leave empty</td></tr>
+    </table>
+    <div class="tip"><strong>Run it:</strong> upload <code>joystick_servo.ino</code> (hands
+      off the stick for the first second — it measures the stick's center then). The servo
+      snaps to 90° and obeys the stick. Knobs at the top of the sketch: <code>MAX_SPEED</code>,
+      <code>DEADZONE</code>, <code>JOY_DIRECTION</code>.</div>
+  </section>
+
+  <section>
+    <h2>Level 2 · all three modules + battery power</h2>
+    <p>Three modules share power — this is where the kit's <strong>breadboard</strong> and
+      <strong>Power Supply Module</strong> earn their place. The breadboard's long red and
+      blue edge rows ("rails") are connected all the way along; the power module snaps onto
+      the end of them and feeds them from the 9V battery. The servo's current spikes now
+      happen on the battery's rail and never touch the Uno's USB power — which is what was
+      faking those super-close targets.</p>
+
+    <figure>
+      <svg viewBox="0 0 900 530" role="img" aria-label="Wiring diagram for all three modules plus the kit's power supply module. The power module, fed by a 9V battery and set to 5V, feeds the breadboard's red and blue power rails. The sensor, joystick, and servo each take power from the rails. The Uno's GND connects to the blue rail as common ground, but the Uno's 5V pin connects to nothing. Signal wires run directly to the Uno: TRIG to D10, ECHO to D11, VRx to A0, servo orange to D9.">
+        <!-- HC-SR04 -->
+        <rect x="40" y="50" width="170" height="90" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="85" cy="93" r="24" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="165" cy="93" r="24" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="125" y="40" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="13.5" font-weight="600" fill="currentColor">HC-SR04</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10">
+          <rect x="66"  y="140" width="7" height="7" fill="var(--w-5v)"/>
+          <rect x="101" y="140" width="7" height="7" fill="var(--w-x)"/>
+          <rect x="136" y="140" width="7" height="7" fill="var(--w-echo)"/>
+          <rect x="171" y="140" width="7" height="7" fill="var(--w-gnd)"/>
+          <text x="69"  y="162" fill="var(--w-5v)" transform="rotate(45 69 162)">VCC</text>
+          <text x="104" y="162" fill="var(--w-x)" transform="rotate(45 104 162)">TRIG</text>
+          <text x="139" y="162" fill="var(--w-echo)" transform="rotate(45 139 162)">ECHO</text>
+          <text x="174" y="162" fill="var(--w-gnd)" transform="rotate(45 174 162)">GND</text>
+        </g>
+
+        <!-- Joystick -->
+        <rect x="300" y="50" width="160" height="90" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="380" cy="92" r="27" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="380" cy="92" r="11" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="380" y="40" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="13.5" font-weight="600" fill="currentColor">Joystick</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10">
+          <rect x="316" y="140" width="7" height="7" fill="var(--w-gnd)"/>
+          <rect x="346" y="140" width="7" height="7" fill="var(--w-5v)"/>
+          <rect x="376" y="140" width="7" height="7" fill="var(--w-x)"/>
+          <text x="319" y="162" fill="var(--w-gnd)" transform="rotate(45 319 162)">GND</text>
+          <text x="349" y="162" fill="var(--w-5v)" transform="rotate(45 349 162)">+5V</text>
+          <text x="379" y="162" fill="var(--w-x)" transform="rotate(45 379 162)">VRx</text>
+        </g>
+
+        <!-- Servo -->
+        <rect x="580" y="50" width="140" height="90" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="632" y="30" width="14" height="20" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="650" y="40" font-family="Chakra Petch, sans-serif" font-size="13.5" font-weight="600" fill="currentColor">SG90</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10">
+          <rect x="596" y="140" width="7" height="7" fill="var(--w-gnd)"/>
+          <rect x="626" y="140" width="7" height="7" fill="var(--w-5v)"/>
+          <rect x="656" y="140" width="7" height="7" fill="var(--w-sig)"/>
+          <text x="599" y="162" fill="var(--w-gnd)" transform="rotate(45 599 162)">brown</text>
+          <text x="629" y="162" fill="var(--w-5v)" transform="rotate(45 629 162)">red</text>
+          <text x="659" y="162" fill="var(--w-sig)" transform="rotate(45 659 162)">orange</text>
+        </g>
+
+        <!-- Breadboard power rails -->
+        <rect x="55" y="232" width="740" height="13" rx="3" fill="var(--w-5v)" opacity="0.28"/>
+        <rect x="55" y="262" width="740" height="13" rx="3" fill="var(--w-gnd)" opacity="0.28"/>
+        <text x="735" y="228" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--w-5v)">+5V rail</text>
+        <text x="735" y="290" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="var(--w-gnd)">GND rail</text>
+
+        <!-- Power Supply Module: snaps onto the rail end, fed by 9V battery -->
+        <rect x="805" y="205" width="90" height="100" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <text x="850" y="196" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="13" font-weight="600" fill="currentColor">Power module</text>
+        <text x="850" y="228" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor">jumpers → 5V</text>
+        <line x1="805" y1="238" x2="795" y2="238" stroke="var(--w-5v)" stroke-width="4"/>
+        <line x1="805" y1="268" x2="795" y2="268" stroke="var(--w-gnd)" stroke-width="4"/>
+        <!-- battery -->
+        <rect x="815" y="330" width="70" height="42" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="850" y="356" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="currentColor">9V batt</text>
+        <polyline points="850,330 850,305" fill="none" stroke="currentColor" stroke-width="2.2"/>
+        <text x="862" y="322" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity="0.75">barrel plug</text>
+
+        <!-- power drops to rails -->
+        <polyline points="69,147 69,232"  fill="none" stroke="var(--w-5v)" stroke-width="2.4"/>
+        <polyline points="349,147 349,232" fill="none" stroke="var(--w-5v)" stroke-width="2.4"/>
+        <polyline points="629,147 629,232" fill="none" stroke="var(--w-5v)" stroke-width="2.4"/>
+        <polyline points="174,147 174,262" fill="none" stroke="var(--w-gnd)" stroke-width="2.4"/>
+        <polyline points="319,147 319,262" fill="none" stroke="var(--w-gnd)" stroke-width="2.4"/>
+        <polyline points="599,147 599,262" fill="none" stroke="var(--w-gnd)" stroke-width="2.4"/>
+
+        <!-- common ground to the Uno; its 5V pin stays EMPTY -->
+        <polyline points="340,275 340,486" fill="none" stroke="var(--w-gnd)" stroke-width="2.6"/>
+        <text x="310" y="470" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="var(--w-gnd)">common ground →</text>
+        <text x="248" y="405" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="var(--w-5v)" text-anchor="end">5V pin: EMPTY</text>
+        <line x1="252" y1="401" x2="302" y2="392" stroke="var(--w-5v)" stroke-width="1" stroke-dasharray="3 2"/>
+
+        <!-- Arduino -->
+        <rect x="290" y="390" width="200" height="110" rx="8" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <text x="390" y="455" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="16" font-weight="600" fill="currentColor">Arduino Uno</text>
+        <text x="390" y="475" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.75">USB → PC</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600">
+          <rect x="306" y="386" width="8" height="8" fill="var(--w-5v)"/>
+          <rect x="336" y="386" width="8" height="8" fill="var(--w-gnd)"/>
+          <rect x="376" y="386" width="8" height="8" fill="var(--w-x)"/>
+          <rect x="406" y="386" width="8" height="8" fill="var(--w-sig)"/>
+          <rect x="436" y="386" width="8" height="8" fill="var(--w-x)"/>
+          <rect x="466" y="386" width="8" height="8" fill="var(--w-echo)"/>
+          <text x="310" y="412" text-anchor="middle" fill="var(--w-5v)">5V</text>
+          <text x="340" y="412" text-anchor="middle" fill="var(--w-gnd)">GND</text>
+          <text x="380" y="412" text-anchor="middle" fill="var(--w-x)">A0</text>
+          <text x="410" y="412" text-anchor="middle" fill="var(--w-sig)">D9</text>
+          <text x="440" y="412" text-anchor="middle" fill="var(--w-x)">D10</text>
+          <text x="470" y="412" text-anchor="middle" fill="var(--w-echo)">D11</text>
+        </g>
+
+        <!-- signal wires (bypass the rails) -->
+        <polyline points="104,147 104,320 440,320 440,386" fill="none" stroke="var(--w-x)" stroke-width="2.4"/>
+        <polyline points="139,147 139,340 470,340 470,386" fill="none" stroke="var(--w-echo)" stroke-width="2.4"/>
+        <polyline points="379,147 379,386" fill="none" stroke="var(--w-x)" stroke-width="2.4"/>
+        <polyline points="659,147 659,360 410,360 410,386" fill="none" stroke="var(--w-sig)" stroke-width="2.4"/>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600">
+          <text x="150" y="315" fill="var(--w-x)">TRIG → D10</text>
+          <text x="150" y="336" fill="var(--w-echo)">ECHO → D11</text>
+          <text x="500" y="356" fill="var(--w-sig)">orange → D9</text>
+          <text x="392" y="380" fill="var(--w-x)">VRx → A0</text>
+        </g>
+      </svg>
+      <figcaption>Power now flows battery → power module → rails → modules: the module snaps
+        onto the end of the breadboard rails (its + and − pins are labeled — match them to red
+        and blue), both its little yellow jumpers set to <strong>5V</strong>, 9V battery in the
+        barrel jack. <strong>The Uno's GND still connects to the blue rail — common ground is
+        mandatory — but the Uno's 5V pin now connects to nothing.</strong> Never wire two 5V
+        sources together. The four signal wires (TRIG, ECHO, VRx, orange) still run straight
+        to their own Uno pins.</figcaption>
+    </figure>
+
+    <table>
+      <tr><th>Module · pin</th><th>Goes to</th></tr>
+      <tr><td>Power module</td><td>snaps onto rail end (+→red, −→blue), jumpers on 5V</td></tr>
+      <tr><td>9V battery</td><td>power module barrel jack, switch ON</td></tr>
+      <tr><td>HC-SR04 VCC / GND</td><td>red rail / blue rail</td></tr>
+      <tr><td>HC-SR04 TRIG</td><td>D10</td></tr>
+      <tr><td>HC-SR04 ECHO</td><td>D11</td></tr>
+      <tr><td>Joystick +5V / GND</td><td>red rail / blue rail</td></tr>
+      <tr><td>Joystick VRx</td><td>A0 (VRy, SW unused)</td></tr>
+      <tr><td>Servo red / brown</td><td>red rail / blue rail</td></tr>
+      <tr><td>Servo orange</td><td>D9</td></tr>
+      <tr><td>Uno GND</td><td>blue rail (common ground — required)</td></tr>
+      <tr><td>Uno 5V</td><td>NOTHING — leave empty now</td></tr>
+    </table>
+    <div class="note"><strong>Rewiring from the old setup?</strong> One wire must be
+      <em>removed</em>: the Uno 5V → red rail jumper. The power module owns the red rail now,
+      and two 5V sources fighting each other can damage both. Ground stays shared.
+      (A 100–470 µF capacitor across the rails is still a fine extra if you ever buy some —
+      but with battery power it's optional, not needed.)</div>
+  </section>
+
+  <section>
+    <h2>Run it</h2>
+    <ol>
+      <li>Open <code>firmware/radar_joystick/radar_joystick.ino</code> in Arduino IDE and
+        Upload (Board: Arduino Uno). Close the Serial Monitor afterwards.</li>
+      <li><code>python run_live.py</code> — it finds the Arduino by itself.</li>
+      <li>Steer with the stick; the scope paints whatever bearings you cross. Sweep the
+        whole room once, then park the beam on a doorway and wait for someone to walk
+        through it.</li>
+    </ol>
+    <div class="note"><strong>How v3 pings — two modes, like a real radar:</strong>
+      <em>slow-to-medium pan</em> (up to about ¾ stick) fires one quick ping per step, so
+      the picture paints live as you sweep — that's <strong>search mode</strong>.
+      <em>Parked</em> (stick released) switches to median-of-3 pings for a clean, filtered
+      reading — <strong>track mode</strong>. <em>Full-stick slewing</em> doesn't ping at
+      all: a hard-driven head vibrates and hears its own ringing as phantom close targets.
+      So: sweep at a relaxed pace to paint, park to sharpen, slam the stick only to
+      reposition.</div>
+    <div class="note"><strong>Moved the mount?</strong> Two rules. (1) The scope is a
+      <em>memory</em> — re-sweep after any move or you're looking at the old room. (2) If
+      you turned the rig around so the servo's 0° end points to your left, everything
+      reads mirrored; set <code>MOUNT_FLIPPED = true</code> at the top of the sketch and
+      both the scope and the stick flip back to matching the room.</div>
+  </section>
+
+  <section>
+    <h2>Why v2 doesn't lie anymore</h2>
+    <p>v1 sometimes showed everything jumping unrealistically close. Two culprits, two fixes:</p>
+    <ul>
+      <li><strong>Vibration ghosts:</strong> a moving servo shakes the sensor, and the
+        transducer hears its own ringing as an echo centimetres away. Fix: the
+        <em>settle gate</em> — no pings until the head has been still for
+        <code>SETTLE_MS</code> (60 ms).</li>
+      <li><strong>Power-sag glitches:</strong> the servo's current spikes dip the 5V rail
+        and corrupt single readings. Fixes: the power module moves the servo onto the 9V
+        battery so spikes never touch the Uno, and each stored range is now the
+        <em>median of 3 pings</em>, so one surviving bad reading gets outvoted by the two
+        honest ones.</li>
+    </ul>
+    <p>The stick itself is unchanged: each axis is a potentiometer read as 0–1023
+      (~512 at rest), and the sketch nudges the servo angle proportionally 50 times a
+      second — rate control, same scheme as a drone transmitter.</p>
+  </section>
+
+  <section>
+    <h2>Tuning knobs</h2>
+    <ul>
+      <li><code>JOY_DIRECTION</code> — flip to <code>-1</code> if push-right steers left
+        (the module is just rotated in your hand).</li>
+      <li><code>MAX_SPEED</code> — degrees per step at full push; raise for twitchier steering.</li>
+      <li><code>DEADZONE</code> — how far off-center counts as "pushed"; raise it if the
+        servo creeps on its own.</li>
+      <li><code>MOUNT_FLIPPED</code> — <code>true</code> if the servo's 0° end points to your
+        left (rig turned around). Mirrors the servo and the stick together.</li>
+      <li><code>PAN_PING_MAX_STEP</code> — how fast you can pan and still get pings
+        (degrees per loop). Raise it to paint at higher speeds; lower it if ghosts creep in
+        while sweeping.</li>
+      <li><code>SETTLE_MS</code> — how long the head must be still to count as parked
+        (switches to the filtered median-of-3 mode).</li>
+    </ul>
+  </section>
+</div>
+
+</body></html>

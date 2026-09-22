@@ -58,7 +58,7 @@ Optional, in order of how much they improve the build:
 
 ## What you already have that matters
 
-You're running Windows on `joshsdesktop`. You'll need:
+You're running Windows. You'll need:
 
 - **Arduino IDE 2.x** (free) — or the VS Code Arduino extension, since you're
   already in VS Code

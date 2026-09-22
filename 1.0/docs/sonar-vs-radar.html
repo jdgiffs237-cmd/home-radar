@@ -1,0 +1,212 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/code/artifact/268201dd-6fa2-4859-bb77-b0f6566e7cb3 -->
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Sonar vs Radar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #eef1ea;
+    --panel: #f7f9f4;
+    --line: #cdd6c6;
+    --ink: #1e281e;
+    --muted: #5c6b58;
+    --sonar: #256e33;
+    --sonar-soft: #dcead9;
+    --radar: #2c5d9e;
+    --radar-soft: #dde7f3;
+    --good: #256e33;
+    --bad: #a03c2a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b110b;
+      --panel: #121a12;
+      --line: #24331f;
+      --ink: #cfe0c6;
+      --muted: #7e937a;
+      --sonar: #4fc763;
+      --sonar-soft: #16301a;
+      --radar: #6ea8e8;
+      --radar-soft: #14202f;
+      --good: #4fc763;
+      --bad: #e0705c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b110b;
+    --panel: #121a12;
+    --line: #24331f;
+    --ink: #cfe0c6;
+    --muted: #7e937a;
+    --sonar: #4fc763;
+    --sonar-soft: #16301a;
+    --radar: #6ea8e8;
+    --radar-soft: #14202f;
+    --good: #4fc763;
+    --bad: #e0705c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.55; margin: 0; padding: 28px 18px 60px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 {
+    font-family: "Chakra Petch", sans-serif; font-size: clamp(26px, 5vw, 38px);
+    margin: 0 0 6px; text-wrap: balance;
+  }
+  .sub { color: var(--muted); margin: 0 0 22px; max-width: 62ch; }
+  .sub strong { color: var(--ink); }
+
+  figure { margin: 0 0 26px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 18px 14px 8px; overflow-x: auto; }
+  svg { max-width: 100%; height: auto; display: block; margin: 0 auto; color: var(--ink); }
+  figcaption { font-size: 13px; color: var(--muted); text-align: center; padding: 8px 10px 6px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .card h3 {
+    margin: 0 0 8px; font-family: "IBM Plex Mono", monospace; font-size: 11px;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 500;
+  }
+  .vs { display: grid; gap: 6px; }
+  .vs div { border-left: 3px solid var(--line); padding-left: 9px; font-size: 13.5px; }
+  .vs .s { border-color: var(--sonar); }
+  .vs .r { border-color: var(--radar); }
+  .vs b { font-family: "Chakra Petch", sans-serif; font-size: 14px; }
+  .vs small { color: var(--muted); display: block; }
+
+  .punch {
+    margin-top: 22px; background: var(--sonar-soft); border: 1px solid var(--sonar);
+    border-radius: 10px; padding: 12px 16px; font-size: 14.5px; max-width: 66ch;
+  }
+  .punch b { color: var(--sonar); }
+</style>
+
+<div class="wrap">
+  <h1>Sonar vs Radar</h1>
+  <p class="sub">Both do the <strong>exact same thing</strong>: send a wave, time the echo,
+    turn time into distance. The only real difference is the wave — and sound is about
+    <strong>a million times slower</strong> than radio. That one fact decides all the hardware.</p>
+
+  <figure>
+    <svg viewBox="0 0 880 430" role="img"
+         aria-label="Sonar and radar both bounce a wave off a target 1 meter away. The sound echo returns after 5,800,000 nanoseconds, which an Arduino can easily time. The radio echo returns after 6.7 nanoseconds, which needs a gigahertz clock or the FMCW trick.">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <!-- ======== SONAR row ======== -->
+      <text x="30" y="52" font-family="Chakra Petch, sans-serif" font-size="20" font-weight="700" fill="var(--sonar)">SONAR</text>
+      <text x="30" y="72" font-size="12" fill="var(--muted)">sound wave · 343 m/s</text>
+      <text x="30" y="88" font-size="12" fill="var(--muted)">(your HC-SR04)</text>
+
+      <!-- emitter -->
+      <rect x="200" y="45" width="46" height="60" rx="6" fill="none" stroke="var(--sonar)" stroke-width="2"/>
+      <text x="223" y="122" font-size="11" text-anchor="middle" fill="var(--muted)">sensor</text>
+
+      <!-- sound waves: wide, slow arcs -->
+      <path d="M266 45 a45 45 0 0 1 0 60" fill="none" stroke="var(--sonar)" stroke-width="2"/>
+      <path d="M296 32 a62 62 0 0 1 0 86" fill="none" stroke="var(--sonar)" stroke-width="2" opacity="0.65"/>
+      <path d="M326 19 a80 80 0 0 1 0 112" fill="none" stroke="var(--sonar)" stroke-width="2" opacity="0.35"/>
+
+      <!-- target wall -->
+      <rect x="620" y="25" width="14" height="100" fill="currentColor" opacity="0.85"/>
+      <text x="627" y="140" font-size="11" text-anchor="middle" fill="var(--muted)">target · 1 m away</text>
+
+      <!-- out and back arrows -->
+      <line x1="360" y1="58" x2="606" y2="58" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="483" y="50" font-size="12" text-anchor="middle" fill="currentColor">ping goes out</text>
+      <line x1="606" y1="92" x2="360" y2="92" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+      <text x="483" y="110" font-size="12" text-anchor="middle" fill="currentColor">echo comes back</text>
+
+      <!-- timing -->
+      <text x="672" y="60" font-size="12" fill="var(--muted)">echo returns after</text>
+      <text x="672" y="86" font-family="IBM Plex Mono, monospace" font-size="21" font-weight="500" fill="var(--sonar)">5,800,000 ns</text>
+      <text x="672" y="104" font-size="12" fill="var(--muted)">(= 5.8 milliseconds)</text>
+      <text x="672" y="126" font-size="12.5" fill="var(--good)">✓ an Arduino times this easily</text>
+
+      <!-- divider -->
+      <line x1="30" y1="185" x2="850" y2="185" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+      <text x="440" y="177" font-size="12" text-anchor="middle" fill="var(--muted)">same distance, same math — R = c · t / 2 — different wave</text>
+
+      <!-- ======== RADAR row ======== -->
+      <text x="30" y="242" font-family="Chakra Petch, sans-serif" font-size="20" font-weight="700" fill="var(--radar)">RADAR</text>
+      <text x="30" y="262" font-size="12" fill="var(--muted)">radio wave · 300,000,000 m/s</text>
+      <text x="30" y="278" font-size="12" fill="var(--muted)">(cars, planes, weather)</text>
+
+      <!-- emitter: antenna -->
+      <line x1="223" y1="295" x2="223" y2="240" stroke="var(--radar)" stroke-width="2"/>
+      <path d="M205 240 L241 240 L223 218 z" fill="none" stroke="var(--radar)" stroke-width="2"/>
+      <text x="223" y="312" font-size="11" text-anchor="middle" fill="var(--muted)">antenna</text>
+
+      <!-- radio waves: tight, fast arcs -->
+      <path d="M250 233 a22 22 0 0 1 0 30" fill="none" stroke="var(--radar)" stroke-width="2"/>
+      <path d="M264 226 a32 32 0 0 1 0 44" fill="none" stroke="var(--radar)" stroke-width="2" opacity="0.75"/>
+      <path d="M278 219 a42 42 0 0 1 0 58" fill="none" stroke="var(--radar)" stroke-width="2" opacity="0.55"/>
+      <path d="M292 212 a52 52 0 0 1 0 72" fill="none" stroke="var(--radar)" stroke-width="2" opacity="0.35"/>
+
+      <!-- target wall -->
+      <rect x="620" y="215" width="14" height="100" fill="currentColor" opacity="0.85"/>
+      <text x="627" y="330" font-size="11" text-anchor="middle" fill="var(--muted)">target · 1 m away</text>
+
+      <!-- out and back arrows -->
+      <line x1="330" y1="248" x2="606" y2="248" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="606" y1="282" x2="330" y2="282" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+
+      <!-- timing -->
+      <text x="672" y="250" font-size="12" fill="var(--muted)">echo returns after</text>
+      <text x="672" y="276" font-family="IBM Plex Mono, monospace" font-size="21" font-weight="500" fill="var(--radar)">6.7 ns</text>
+      <text x="672" y="294" font-size="12" fill="var(--muted)">(0.0000067 milliseconds)</text>
+      <text x="672" y="316" font-size="12.5" fill="var(--bad)">✗ needs a GHz clock…</text>
+      <text x="672" y="334" font-size="12.5" fill="var(--muted)">…or the FMCW trick (§6)</text>
+
+      <!-- bottom scale bar -->
+      <text x="30" y="384" font-size="12" fill="var(--muted)">the two echo times, drawn to scale:</text>
+      <rect x="240" y="374" width="580" height="12" rx="3" fill="var(--sonar)" opacity="0.85"/>
+      <text x="826" y="384" font-size="11" fill="var(--sonar)">sonar</text>
+      <rect x="240" y="398" width="1" height="12" fill="var(--radar)"/>
+      <text x="248" y="408" font-size="11" fill="var(--radar)">radar (too thin to see — 870,000× shorter)</text>
+    </svg>
+    <figcaption>Same 1-meter measurement. The sound echo is slow enough for a $3 microcontroller
+      to time with a stopwatch; the radio echo is a million times faster, so real radar needs
+      either exotic timing hardware or the FMCW frequency trick.</figcaption>
+  </figure>
+
+  <div class="cards">
+    <div class="card"><h3>Wave</h3>
+      <div class="vs">
+        <div class="s"><b>Sound</b><small>pressure wave in air — needs air to travel</small></div>
+        <div class="r"><b>Radio</b><small>light's cousin — works in a vacuum, fog, rain</small></div>
+      </div>
+    </div>
+    <div class="card"><h3>Typical reach</h3>
+      <div class="vs">
+        <div class="s"><b>Centimeters to meters</b><small>your build: 3 cm – 4 m</small></div>
+        <div class="r"><b>Meters to hundreds of km</b><small>aircraft, weather, ships</small></div>
+      </div>
+    </div>
+    <div class="card"><h3>Hardware cost</h3>
+      <div class="vs">
+        <div class="s"><b>$3 sensor + Arduino</b><small>timing is trivially easy</small></div>
+        <div class="r"><b>$30 module and up</b><small>cheap only thanks to FMCW</small></div>
+      </div>
+    </div>
+    <div class="card"><h3>Where each wins</h3>
+      <div class="vs">
+        <div class="s"><b>Short range, indoors, underwater</b><small>subs use sonar — radio dies in water</small></div>
+        <div class="r"><b>Long range, all weather, speed</b><small>sound is useless past a few meters of air</small></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="punch"><b>The twist:</b> your Phase 1 "radar" is technically a <b>sonar</b> —
+    it pings with sound. But the math, the sweep, the detection code, and the tracking are
+    identical to real radar. That's the whole idea: learn the hard parts on the easy wave,
+    then swap in real RF for Phase 2.</p>
+</div>
+
+</body></html>

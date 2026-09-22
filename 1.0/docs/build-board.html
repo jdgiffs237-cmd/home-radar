@@ -1,0 +1,424 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/code/artifact/fb16ac28-02d4-401f-af5d-8eba6c76f58c -->
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Radar Build Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #eef1ea;
+    --panel: #f7f9f4;
+    --panel2: #e4e9df;
+    --line: #cdd6c6;
+    --ink: #1e281e;
+    --muted: #5c6b58;
+    --accent: #256e33;
+    --accent-soft: #dcead9;
+    --amber: #8a5a00;
+    --amber-soft: #f2e5c8;
+    --red: #a03c2a;
+    --red-soft: #f0ddd6;
+    --done: #256e33;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b110b;
+      --panel: #121a12;
+      --panel2: #0e150e;
+      --line: #24331f;
+      --ink: #cfe0c6;
+      --muted: #7e937a;
+      --accent: #4fc763;
+      --accent-soft: #16301a;
+      --amber: #e0a93f;
+      --amber-soft: #2e2410;
+      --red: #e0705c;
+      --red-soft: #331812;
+      --done: #4fc763;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b110b;
+    --panel: #121a12;
+    --panel2: #0e150e;
+    --line: #24331f;
+    --ink: #cfe0c6;
+    --muted: #7e937a;
+    --accent: #4fc763;
+    --accent-soft: #16301a;
+    --amber: #e0a93f;
+    --amber-soft: #2e2410;
+    --red: #e0705c;
+    --red-soft: #331812;
+    --done: #4fc763;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 15px; line-height: 1.55;
+    margin: 0; padding: 28px 18px 64px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+
+  header { margin-bottom: 20px; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: "Chakra Petch", "IBM Plex Sans", sans-serif;
+    font-size: clamp(28px, 5vw, 40px); font-weight: 700;
+    margin: 2px 0 4px; text-wrap: balance;
+  }
+  .sub { color: var(--muted); max-width: 60ch; margin: 0; }
+
+  .summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px; margin: 22px 0;
+  }
+  .stat {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .stat .label {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  }
+  .stat .value {
+    font-family: "Chakra Petch", sans-serif; font-size: 26px; font-weight: 600;
+    font-variant-numeric: tabular-nums; line-height: 1.2;
+  }
+  .stat .value small { font-size: 15px; color: var(--muted); font-weight: 500; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+
+  section.card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px 20px;
+  }
+  h2 {
+    font-family: "Chakra Petch", sans-serif; font-size: 18px; font-weight: 600;
+    margin: 0 0 4px; display: flex; align-items: baseline; gap: 8px;
+  }
+  .h2note { font-size: 13px; color: var(--muted); font-family: "IBM Plex Sans", sans-serif; font-weight: 400; }
+
+  ul.checklist { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .item {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: start;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 9px;
+    padding: 10px 12px;
+  }
+  .item input[type=checkbox] {
+    width: 18px; height: 18px; margin-top: 3px; accent-color: var(--accent); cursor: pointer;
+  }
+  .item .name { font-weight: 600; }
+  .item .note { font-size: 13px; color: var(--muted); }
+  .item .price {
+    font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+    color: var(--muted); white-space: nowrap; padding-top: 2px;
+  }
+  .item.checked { border-color: var(--accent); }
+  .item.checked .name { color: var(--done); }
+  .item.checked .name::after { content: " ✓"; }
+  .item a { color: var(--accent); font-weight: 600; }
+  .item a:focus-visible, .item input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  .budgetbar { margin-top: 14px; }
+  .budgetbar .track {
+    height: 10px; border-radius: 6px; background: var(--panel2);
+    border: 1px solid var(--line); overflow: hidden;
+  }
+  .budgetbar .fill { height: 100%; background: var(--accent); width: 0%; transition: width .3s; }
+  .budgetbar .caption {
+    display: flex; justify-content: space-between; font-size: 12px;
+    font-family: "IBM Plex Mono", monospace; color: var(--muted); margin-top: 4px;
+  }
+
+  ol.steps { list-style: none; margin: 14px 0 0; padding: 0; }
+  .step {
+    display: grid; grid-template-columns: 34px 1fr; gap: 12px;
+    position: relative; padding: 0 0 18px;
+  }
+  .step:not(:last-child)::before {
+    content: ""; position: absolute; left: 16px; top: 34px; bottom: 0;
+    width: 2px; background: var(--line);
+  }
+  .step .dot {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid var(--line); background: var(--panel2);
+    display: grid; place-items: center;
+    font-family: "Chakra Petch", sans-serif; font-weight: 600; font-size: 14px;
+    color: var(--muted); cursor: pointer; user-select: none;
+  }
+  .step.done .dot { background: var(--accent-soft); border-color: var(--accent); color: var(--done); }
+  .step.done .stitle { color: var(--done); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .step.next .dot { border-color: var(--amber); color: var(--amber); }
+  .step .stitle { font-weight: 600; cursor: pointer; }
+  .step .sdetail { font-size: 13px; color: var(--muted); }
+  .pill {
+    display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px;
+    letter-spacing: .08em; text-transform: uppercase; border-radius: 20px;
+    padding: 1px 9px; margin-left: 6px; vertical-align: 1px;
+  }
+  .pill.next { background: var(--amber-soft); color: var(--amber); }
+  .pill.done { background: var(--accent-soft); color: var(--done); }
+
+  .dontbuy { margin-top: 16px; border: 1px solid var(--red); border-radius: 9px;
+    background: var(--red-soft); padding: 12px 14px; }
+  .dontbuy h3 {
+    margin: 0 0 6px; font-family: "Chakra Petch", sans-serif; font-size: 14px;
+    color: var(--red); letter-spacing: .06em; text-transform: uppercase;
+  }
+  .dontbuy ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .dontbuy li { margin-bottom: 4px; }
+  .dontbuy .why { color: var(--muted); }
+
+  .library { margin-top: 18px; }
+  .shelf {
+    list-style: none; margin: 12px 0 0; padding: 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px;
+  }
+  .shelf a {
+    display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 9px;
+    padding: 11px 13px; text-decoration: none; color: inherit;
+  }
+  .shelf a:hover { border-color: var(--accent); }
+  .shelf .ico { font-size: 21px; line-height: 1.25; }
+  .shelf .pname { font-weight: 600; color: var(--accent); }
+  .shelf .pdesc { font-size: 12.5px; color: var(--muted); }
+
+  #savenote {
+    position: fixed; right: 16px; bottom: 14px; font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--muted); background: var(--panel);
+    border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px;
+    opacity: 0; transition: opacity .4s;
+  }
+  #savenote.show { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .budgetbar .fill, #savenote { transition: none; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">home-radar · phase 1 · hardware first</div>
+    <h1>Radar Build Board</h1>
+    <p class="sub">Everything to buy and every step to finish, in one place.
+      Tick things off as you go — it remembers.</p>
+  </header>
+
+  <div class="summary">
+    <div class="stat"><div class="label">Steps done</div><div class="value" id="statSteps">–</div></div>
+    <div class="stat"><div class="label">Spent so far</div><div class="value" id="statSpent">–</div></div>
+    <div class="stat"><div class="label">Budget left</div><div class="value" id="statLeft">–</div></div>
+    <div class="stat"><div class="label">Up next</div><div class="value" id="statNext" style="font-size:16px">–</div></div>
+  </div>
+
+  <div class="cols">
+    <section class="card">
+      <h2>Shopping list <span class="h2note">prices are ballpark</span></h2>
+      <ul class="checklist" id="shopList"></ul>
+      <div class="budgetbar">
+        <div class="track"><div class="fill" id="budgetFill"></div></div>
+        <div class="caption"><span id="budgetSpent">$0</span><span id="budgetCap">of $50 budget</span></div>
+      </div>
+      <div class="dontbuy">
+        <h3>Don't buy (yet)</h3>
+        <ul>
+          <li>Cheap "24&nbsp;GHz radar" / RCWL-0516 modules — <span class="why">motion switches, not radar; no range, no velocity</span></li>
+          <li>HB100 Doppler module — <span class="why">real radar but no range; good later, bad first project</span></li>
+          <li>RTL-SDR — <span class="why">you'll want one for Phase 2; don't split the budget now</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Build progress <span class="h2note">click a step to mark it done</span></h2>
+      <ol class="steps" id="stepList"></ol>
+    </section>
+  </div>
+
+  <section class="card library">
+    <h2>Diagrams &amp; guides <span class="h2note">everything made for this build so far</span></h2>
+    <ul class="shelf">
+      <li><a href="https://claude.ai/code/artifact/7435a01d-c50d-4bdc-baa7-adfc44c06569" target="_blank" rel="noopener">
+        <span class="ico">🕹️</span>
+        <span><span class="pname">Joystick Servo Control</span><br>
+        <span class="pdesc">Wiring diagrams for levels 1 and 2, firmware guide, tuning tips</span></span></a></li>
+      <li><a href="https://claude.ai/code/artifact/2cb7dbbe-1ca4-4fa8-96ce-531b1f0cb744" target="_blank" rel="noopener">
+        <span class="ico">📐</span>
+        <span><span class="pname">Five Equations You Watched Happen</span><br>
+        <span class="pdesc">The core radar physics, each tied to what your sensor actually did</span></span></a></li>
+      <li><a href="https://claude.ai/code/artifact/007d5de5-996b-479a-a5ac-871889ffb551" target="_blank" rel="noopener">
+        <span class="ico">🟢</span>
+        <span><span class="pname">Reading the Scope</span><br>
+        <span class="pdesc">Field manual for the green display — every mark decoded, three experiments</span></span></a></li>
+      <li><a href="https://claude.ai/code/artifact/bfd45120-1e66-489a-90c5-fde81331c403" target="_blank" rel="noopener">
+        <span class="ico">🔧</span>
+        <span><span class="pname">Radar Build Night</span><br>
+        <span class="pdesc">The original build walkthrough: wiring, flashing, first light</span></span></a></li>
+      <li><a href="https://claude.ai/code/artifact/3c6f73d8-b602-4040-b8ae-473f1d78b8e4" target="_blank" rel="noopener">
+        <span class="ico">📡</span>
+        <span><span class="pname">The Range Flip</span><br>
+        <span class="pdesc">Exercise 1 explained visually — why misses must map to zero</span></span></a></li>
+      <li><a href="https://claude.ai/code/artifact/268201dd-6fa2-4859-bb77-b0f6566e7cb3" target="_blank" rel="noopener">
+        <span class="ico">🔊</span>
+        <span><span class="pname">Sonar vs Radar</span><br>
+        <span class="pdesc">What transfers from the ultrasonic build to real RF, and what doesn't</span></span></a></li>
+      <li><a href="https://github.com/jdgiffs237-cmd/home-radar" target="_blank" rel="noopener">
+        <span class="ico">💾</span>
+        <span><span class="pname">GitHub: home-radar</span><br>
+        <span class="pdesc">The public repo — all code and firmware samples, always current</span></span></a></li>
+    </ul>
+  </section>
+</div>
+<div id="savenote">saved</div>
+
+<script id="state" type="application/json">{"rev":9,"budget":50,"shop":[{"id":"kit","name":"Elegoo UNO R3 Super Starter Kit","price":48.75,"url":"https://www.amazon.com/dp/B01D8KOZF4","note":"Ordered Aug 31, arriving overnight Sep 1. Board, breadboard, wires, SG90 servo, HC-SR04 ultrasonic sensor, USB cable, 22-lesson tutorial. Receipt logged in receipts/spending.csv.","done":true},{"id":"vl53","name":"HiLetgo VL53L0X ToF lidar module","price":7.2,"note":"Ordered Aug 31, arriving Sep 1. Laser time-of-flight: 2° beam instead of 30°, so the radar can actually tell two objects apart.","done":true},{"id":"mg90","name":"MG90S metal-gear servo","price":6,"note":"Optional. Steadier than the kit's plastic-gear servo; less smearing.","done":false},{"id":"pantilt","name":"Pan-tilt bracket kit","price":8,"note":"Optional. Holds the sensor on the servo without tape.","done":false},{"id":"psu","name":"Breadboard power supply (5V)","price":5,"note":"Optional. Stops the board from resetting when the servo strains.","done":false}],"steps":[{"id":"deps","title":"Install Python + project requirements","detail":"numpy, matplotlib, pyserial — installed on this PC on Aug 30, 2026.","done":true},{"id":"read1","title":"Read docs/01-radar-fundamentals.md","detail":"The five equations you actually need.","done":true},{"id":"sim","title":"Run the simulator and watch the scope","detail":"python run_sim.py — or python run_web.py for the browser version.","done":true},{"id":"order","title":"Order the parts","detail":"Ordered Aug 31 from Amazon: Super Starter Kit $48.75 + VL53L0X $7.20 = $55.95. Both arriving Sep 1. Receipts tracked in receipts/ in the project folder.","done":true},{"id":"joystick","title":"Project 2: hand-steered radar (all 3 modules)","detail":"firmware/radar_joystick v2: settle-gated + median-filtered so servo noise can't fake close targets. Add the capacitor across the rails (stripe → GND). Wiring diagram on the Joystick Servo Control page.","done":false},{"id":"detect","title":"Do the detection exercises","detail":"radar/detect.py — 1 of 5 done: range_to_intensity is written and passing. CFAR next, hands-on against the sim scope while parts ship.","done":false},{"id":"build","title":"Build the hardware","detail":"docs/03-hardware-build.md, then python run_live.py --port COM3. Board not showing a COM port? Install the CH340 driver.","done":false},{"id":"track","title":"Do the tracking exercises","detail":"Fix radar/track.py — real data is messy enough to need it.","done":false},{"id":"phase2","title":"Read docs/04-going-real-rf.md","detail":"Where to spend the next $50 on real RF.","done":false}]}</script>
+
+<script>
+"use strict";
+
+// Pristine copy of the page as served -- publishes regenerate from this, never the live DOM.
+const PRISTINE = "<!doctype html>\n" + document.documentElement.outerHTML;
+
+const stateEl = document.getElementById("state");
+let state = JSON.parse(stateEl.textContent);
+try {
+  // Fallback store; only trusted when at least as new as the published state,
+  // so a fresh publish isn't shadowed by a stale local copy.
+  const local = localStorage.getItem("radar-build-board");
+  if (local) {
+    const ls = JSON.parse(local);
+    if ((ls.rev || 0) >= (state.rev || 0)) state = ls;
+  }
+} catch (e) { /* storage blocked: run from embedded state */ }
+
+let artifactApi = null;
+if (window.claude && window.claude.use) {
+  claude.use("artifact").then(a => { artifactApi = a; });
+}
+
+const fmt = n => (n < 0 ? "-$" : "$") + Math.abs(Math.round(n * 100) / 100);
+
+function render() {
+  const shopList = document.getElementById("shopList");
+  shopList.innerHTML = "";
+  let spent = 0;
+  for (const it of state.shop) {
+    if (it.done) spent += it.price;
+    const li = document.createElement("li");
+    li.className = "item" + (it.done ? " checked" : "");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = it.done;
+    cb.setAttribute("aria-label", "bought: " + it.name);
+    cb.onchange = () => { it.done = cb.checked; changed(); };
+    const mid = document.createElement("div");
+    const name = document.createElement("div");
+    name.className = "name";
+    if (it.url) {
+      const a = document.createElement("a");
+      a.href = it.url; a.target = "_blank"; a.rel = "noopener";
+      a.textContent = it.name;
+      name.appendChild(a);
+    } else {
+      name.textContent = it.name;
+    }
+    const note = document.createElement("div");
+    note.className = "note";
+    note.textContent = it.note;
+    mid.append(name, note);
+    const price = document.createElement("div");
+    price.className = "price";
+    price.textContent = fmt(it.price);
+    li.append(cb, mid, price);
+    shopList.appendChild(li);
+  }
+
+  const stepList = document.getElementById("stepList");
+  stepList.innerHTML = "";
+  const nextIdx = state.steps.findIndex(s => !s.done);
+  state.steps.forEach((s, i) => {
+    const li = document.createElement("li");
+    li.className = "step" + (s.done ? " done" : "") + (i === nextIdx ? " next" : "");
+    const dot = document.createElement("div");
+    dot.className = "dot";
+    dot.textContent = s.done ? "✓" : (i + 1);
+    const body = document.createElement("div");
+    const t = document.createElement("div");
+    t.className = "stitle";
+    t.textContent = s.title;
+    if (i === nextIdx) {
+      const pill = document.createElement("span");
+      pill.className = "pill next"; pill.textContent = "next";
+      t.appendChild(pill);
+    }
+    const d = document.createElement("div");
+    d.className = "sdetail";
+    d.textContent = s.detail;
+    body.append(t, d);
+    const toggle = () => { s.done = !s.done; changed(); };
+    dot.onclick = toggle;
+    t.onclick = toggle;
+    dot.tabIndex = 0;
+    dot.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+    li.append(dot, body);
+    stepList.appendChild(li);
+  });
+
+  const doneCount = state.steps.filter(s => s.done).length;
+  document.getElementById("statSteps").innerHTML =
+    doneCount + " <small>/ " + state.steps.length + "</small>";
+  document.getElementById("statSpent").textContent = fmt(spent);
+  document.getElementById("statLeft").textContent = fmt(state.budget - spent);
+  document.getElementById("statNext").textContent =
+    nextIdx === -1 ? "All done 🎉" : state.steps[nextIdx].title;
+
+  document.getElementById("budgetFill").style.width =
+    Math.min(100, (spent / state.budget) * 100) + "%";
+  document.getElementById("budgetSpent").textContent = fmt(spent) + " spent";
+  document.getElementById("budgetCap").textContent = "of " + fmt(state.budget) + " budget";
+}
+
+let saveTimer = null;
+function changed() {
+  render();
+  try { localStorage.setItem("radar-build-board", JSON.stringify(state)); } catch (e) {}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 1200);   // batch rapid ticks into one publish
+}
+
+async function save() {
+  if (!artifactApi) { note("saved on this device"); return; }
+  const json = JSON.stringify(state).replace(/</g, "\\u003c");
+  const html = PRISTINE.replace(
+    /<script id="state" type="application\/json">[\s\S]*?<\/script>/,
+    '<script id="state" type="application/json">' + json + "<\/script>"
+  );
+  try {
+    await artifactApi.publish(html);
+    note("saved");
+  } catch (e) {
+    if (e && e.code === "conflict") return;  // another view won; it will reload us
+    note("saved on this device");
+  }
+}
+
+let noteTimer = null;
+function note(msg) {
+  const el = document.getElementById("savenote");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => el.classList.remove("show"), 1600);
+}
+
+render();
+</script>
+
+</body></html>

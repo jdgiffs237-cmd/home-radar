@@ -1,0 +1,214 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/code/artifact/2cb7dbbe-1ca4-4fa8-96ce-531b1f0cb744 -->
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Five Equations You Watched Happen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #eef1ea; --panel: #f7f9f4; --panel2: #e4e9df; --line: #cdd6c6;
+    --ink: #1e281e; --muted: #5c6b58;
+    --accent: #256e33; --accent-soft: #dcead9;
+    --amber: #8a5a00; --amber-soft: #f2e5c8;
+    --scope-bg: #06120a; --scope-grid: #1d4a2a; --scope-glow: #52d96d; --scope-hot: #b8f5c4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+      --ink: #cfe0c6; --muted: #7e937a;
+      --accent: #4fc763; --accent-soft: #16301a;
+      --amber: #e0a93f; --amber-soft: #2e2410;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+    --ink: #cfe0c6; --muted: #7e937a;
+    --accent: #4fc763; --accent-soft: #16301a;
+    --amber: #e0a93f; --amber-soft: #2e2410;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 16px; line-height: 1.62; margin: 0; padding: 32px 18px 80px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: "Chakra Petch", sans-serif; font-size: clamp(28px, 6vw, 42px);
+    font-weight: 700; margin: 4px 0 6px; text-wrap: balance; line-height: 1.05;
+  }
+  .sub { color: var(--muted); max-width: 60ch; margin: 0 0 8px; font-size: 17px; }
+
+  .eq {
+    display: grid; grid-template-columns: 54px 1fr; gap: 20px;
+    padding: 26px 0; border-top: 1px solid var(--line);
+  }
+  .eq:first-of-type { border-top: none; }
+  .num {
+    font-family: "Chakra Petch", sans-serif; font-size: 30px; font-weight: 700;
+    color: var(--accent); line-height: 1; padding-top: 2px;
+  }
+  h2 {
+    font-family: "Chakra Petch", sans-serif; font-size: 21px; font-weight: 600;
+    margin: 0 0 10px;
+  }
+  p { margin: 0 0 12px; }
+  .formula {
+    font-family: "IBM Plex Mono", monospace; font-size: 20px; font-weight: 500;
+    background: var(--scope-bg); color: var(--scope-glow);
+    border-radius: 8px; padding: 14px 18px; margin: 4px 0 14px;
+    text-align: center; letter-spacing: .01em; overflow-x: auto;
+  }
+  .formula .sm { color: #7fbf8c; font-size: 14px; }
+  .saw {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 12px 0 0; font-size: 15px;
+  }
+  .saw b { font-family: "Chakra Petch", sans-serif; letter-spacing: .02em; }
+  code {
+    font-family: "IBM Plex Mono", monospace; font-size: .9em;
+    background: var(--panel2); border: 1px solid var(--line);
+    padding: 1px 5px; border-radius: 4px;
+  }
+  figure { margin: 8px 0 14px; }
+  figure svg { display: block; max-width: 100%; height: auto; }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; }
+
+  .closer {
+    margin-top: 30px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 22px 24px;
+  }
+  .closer h2 { margin-bottom: 8px; }
+  .closer a { color: var(--accent); font-weight: 600; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">home-radar · the why and the how</div>
+    <h1>Five Equations You Watched Happen</h1>
+    <p class="sub">You built the radar first, on purpose. So none of this is abstract —
+      each equation is the math behind something your own sensor already did on the desk.</p>
+  </header>
+
+  <div class="eq">
+    <div class="num">1</div>
+    <div>
+      <h2>Range is time</h2>
+      <div class="formula">R = c · t / 2 &nbsp; <span class="sm">c = 343 m/s (sound)</span></div>
+      <p>Send a chirp, wait for the echo, measure how long the round trip took. Distance is
+        just that time times the speed of sound, halved (the sound went there <em>and</em> back).
+        That single line is the entire sensor.</p>
+      <figure>
+        <svg viewBox="0 0 620 150" role="img" aria-label="A pulse leaves the sensor, travels to an object, and returns. The round-trip time t maps to range R = c times t over 2.">
+          <circle cx="60" cy="75" r="9" fill="var(--scope-glow)"/>
+          <text x="60" y="112" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">sensor</text>
+          <rect x="530" y="45" width="16" height="60" fill="var(--scope-grid)" stroke="currentColor" stroke-width="1.4"/>
+          <text x="538" y="122" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">wall</text>
+          <line x1="72" y1="66" x2="524" y2="66" stroke="var(--scope-glow)" stroke-width="2" marker-end="url(#ah)"/>
+          <text x="300" y="58" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--scope-glow)">chirp out →</text>
+          <line x1="524" y1="86" x2="72" y2="86" stroke="var(--scope-hot)" stroke-width="2" marker-end="url(#ah2)"/>
+          <text x="300" y="102" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">← echo back (took t)</text>
+          <defs>
+            <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--scope-glow)"/></marker>
+            <marker id="ah2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--scope-hot)"/></marker>
+          </defs>
+        </svg>
+      </figure>
+      <div class="saw"><b>You saw it:</b> the debug line <code>R 18 90 0.091</code> — your hand
+        threw an echo back in about 0.5&nbsp;ms, and the Arduino turned that time into 9&nbsp;cm.
+        The 2.7&nbsp;m wall readings were the same math on a longer round trip.</div>
+    </div>
+  </div>
+
+  <div class="eq">
+    <div class="num">2</div>
+    <div>
+      <h2>Range resolution is pulse width</h2>
+      <div class="formula">ΔR = c · τ / 2 &nbsp; <span class="sm">≈ 3.4 cm for HC-SR04</span></div>
+      <p>Two objects closer together than half the pulse length blur into one blob. The HC-SR04's
+        chirp is 200 microseconds long, which sets a hard floor of about 3.4&nbsp;cm. No software
+        trick beats it — two things 2&nbsp;cm apart in depth are <em>one</em> dot, forever.</p>
+      <div class="saw"><b>You saw it:</b> the median-of-3 pings never resolved fine detail on a
+        surface — it can't. This is the sensor's grain, baked into physics, not a tuning problem.</div>
+    </div>
+  </div>
+
+  <div class="eq">
+    <div class="num">3</div>
+    <div>
+      <h2>Angular resolution is beamwidth</h2>
+      <div class="formula">ΔX ≈ R · θ &nbsp; <span class="sm">θ ≈ 30° for HC-SR04</span></div>
+      <p>Your beam isn't a laser line — it's a wide ~30° cone. Two targets at the same distance
+        but only a few degrees apart both sit inside the cone at once, so they return as
+        <em>one</em> smeared arc. The farther out you look, the wider that blur gets.</p>
+      <figure>
+        <svg viewBox="0 0 620 170" role="img" aria-label="A wide beam cone from the sensor covers two close targets at once, so they merge into a single arc on the display.">
+          <circle cx="55" cy="85" r="8" fill="var(--scope-glow)"/>
+          <path d="M 55 85 L 560 25 L 560 145 Z" fill="var(--scope-glow)" opacity="0.13"/>
+          <line x1="55" y1="85" x2="560" y2="25" stroke="var(--scope-glow)" stroke-width="1.3" opacity="0.6"/>
+          <line x1="55" y1="85" x2="560" y2="145" stroke="var(--scope-glow)" stroke-width="1.3" opacity="0.6"/>
+          <circle cx="470" cy="66" r="8" fill="var(--scope-hot)"/>
+          <circle cx="470" cy="104" r="8" fill="var(--scope-hot)"/>
+          <text x="500" y="60" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">two people…</text>
+          <text x="500" y="120" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--accent)">…one blob</text>
+          <text x="150" y="80" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--scope-glow)">~30° beam</text>
+        </svg>
+        <figcaption>Accuracy (where the center of a target is) can be sharp; resolution (telling
+          two targets apart) cannot beat the beamwidth. Radar people are strict about the difference.</figcaption>
+      </figure>
+      <div class="saw"><b>You saw it twice.</b> Objects painted as arcs, never points — that's the
+        cone. And when your hand got close, it lit up <em>every</em> bearing at once: up close the
+        cone swallows the whole field, so "the target is where I'm pointing" stopped being true.
+        That's why the $7 VL53L0X laser (2° beam) is such an upgrade.</div>
+    </div>
+  </div>
+
+  <div class="eq">
+    <div class="num">4</div>
+    <div>
+      <h2>Scan pattern &amp; revisit time</h2>
+      <div class="formula">revisit = steps × time-per-step</div>
+      <p>To see everywhere you must sweep, and sweeping takes time. However long between two looks
+        at the same bearing is the <em>revisit time</em> — and anything can move, unseen, in that
+        gap. Sweep wide and each spot updates slowly; park narrow and one spot updates fast. You
+        can't have both.</p>
+      <div class="saw"><b>You felt it in your thumb:</b> the ghost dots that lingered where your
+        hand used to be — stale until you swept back. And the choice between panning the whole room
+        vs. parking on the doorway <em>is</em> radar's search-vs-track tradeoff. Billion-dollar
+        systems fight this exact fight; you fight it with a joystick.</div>
+    </div>
+  </div>
+
+  <div class="eq">
+    <div class="num">5</div>
+    <div>
+      <h2>Echo strength falls off a cliff</h2>
+      <div class="formula">P<span class="sm">received</span> ∝ σ / R⁴</div>
+      <p>The term that matters: <b>R⁴</b>. Double the distance and the echo you get back drops by
+        <em>16×</em>. That's why targets don't fade politely with range — they're fine, then
+        suddenly gone. And <code>σ</code> (how well a shape reflects, not how big it is) is why a
+        wall facing you square is bright but the same wall at an angle vanishes.</p>
+      <div class="saw"><b>You saw it:</b> your wall only appeared at the one or two bearings facing
+        it dead-on — steer a few degrees off and it disappeared, because the echo bounced sideways
+        into the room instead of back to you. Soft things (clothes, the carpet) barely showed at
+        all. That's <code>σ</code> and R⁴ — the same physics that shapes stealth aircraft.</div>
+    </div>
+  </div>
+
+  <div class="closer">
+    <h2>Where this goes next</h2>
+    <p>Those five gave you the <em>signal</em>. The remaining question is the one your file opened
+      with: <strong>which returns are actually targets?</strong> That's <b>CFAR</b> — a threshold
+      that adapts to its surroundings instead of using one fixed number
+      (<code>α = N · (P_fa<span class="sm">^(-1/N)</span> − 1)</code>), and it's exactly exercises
+      2–5 waiting in <code>radar/detect.py</code>. You've already done exercise 1. Now you'll write
+      the <em>decision</em> layer — and this time you can test it against your own room instead of
+      the simulator.</p>
+    <p>The scope draws boxes around targets the moment your CFAR works. That's the next session.</p>
+  </div>
+</div>
+
+</body></html>

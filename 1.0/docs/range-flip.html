@@ -1,0 +1,376 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/code/artifact/3c6f73d8-b602-4040-b8ae-473f1d78b8e4 -->
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>The Range Flip</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #F7F8F7;
+    --surface: #FFFFFF;
+    --ink: #22302E;
+    --muted: #5D6E6B;
+    --line: #D7DEDC;
+    --grid: #E6EBEA;
+    --range: #B06A1F;      /* what the sensor reports */
+    --intensity: #0E7C7B;  /* what CFAR wants */
+    --intensity-soft: #0E7C7B22;
+    --range-soft: #B06A1F22;
+    --miss: #B3423A;
+    --miss-soft: #B3423A18;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101615;
+      --surface: #182120;
+      --ink: #E2E9E7;
+      --muted: #93A5A1;
+      --line: #2C3A38;
+      --grid: #22302E;
+      --range: #D89A54;
+      --intensity: #3FB8B6;
+      --intensity-soft: #3FB8B62E;
+      --range-soft: #D89A5426;
+      --miss: #E07A72;
+      --miss-soft: #E07A7222;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101615;
+    --surface: #182120;
+    --ink: #E2E9E7;
+    --muted: #93A5A1;
+    --line: #2C3A38;
+    --grid: #22302E;
+    --range: #D89A54;
+    --intensity: #3FB8B6;
+    --intensity-soft: #3FB8B62E;
+    --range-soft: #D89A5426;
+    --miss: #E07A72;
+    --miss-soft: #E07A7222;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 48px 20px 80px;
+  }
+  main { max-width: 760px; margin: 0 auto; }
+  h1 {
+    font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em;
+    margin: 0 0 4px; text-wrap: balance;
+  }
+  .sub { color: var(--muted); margin: 0 0 40px; max-width: 60ch; }
+  h2 {
+    font-size: 1.15rem; font-weight: 600; margin: 56px 0 8px;
+  }
+  h2 .step {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.75rem;
+    color: var(--intensity); letter-spacing: 0.08em; margin-right: 10px;
+  }
+  p { max-width: 66ch; margin: 0 0 14px; }
+  code, .mono { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 0.9em; }
+  code { background: var(--grid); padding: 1px 5px; border-radius: 3px; }
+
+  figure {
+    margin: 20px 0 0; padding: 20px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    overflow-x: auto;
+  }
+  figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  figcaption {
+    font-size: 0.85rem; color: var(--muted); margin-top: 14px; max-width: 68ch;
+  }
+
+  .formula {
+    font-family: "IBM Plex Mono", monospace; font-size: 1.15rem;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 18px 22px; margin: 20px 0; text-align: center;
+  }
+  .formula .i { color: var(--intensity); font-weight: 600; }
+  .formula .r { color: var(--range); font-weight: 600; }
+
+  .cases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+  .case {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; font-size: 0.9rem;
+  }
+  .case .tag {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.72rem;
+    letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 6px;
+  }
+  .case .out { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+  .case.ok .tag { color: var(--intensity); }
+  .case.bad .tag { color: var(--miss); }
+  .case p { font-size: 0.85rem; color: var(--muted); margin: 6px 0 0; }
+  @media (max-width: 640px) { .cases { grid-template-columns: 1fr; } }
+
+  /* interactive */
+  .widget {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 22px; margin-top: 20px;
+  }
+  .widget label { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 6px; }
+  .widget input[type=range] { width: 100%; accent-color: var(--intensity); }
+  .readout {
+    display: flex; gap: 24px; flex-wrap: wrap; margin-top: 14px;
+    font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+  }
+  .readout div { min-width: 150px; }
+  .readout .k { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: block; }
+  .readout .v { font-size: 1.3rem; font-weight: 600; }
+  #caseOut { font-size: 0.95rem; }
+  .track {
+    position: relative; height: 40px; margin-top: 18px;
+    border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+  }
+  .track .seg { position: absolute; top: 0; bottom: 0; }
+  #segRange { left: 0; background: var(--range-soft); border-right: 2px solid var(--range); }
+  #segInt { right: 0; background: var(--intensity-soft); }
+  .track .lbl {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; white-space: nowrap;
+  }
+  #lblRange { color: var(--range); padding-left: 8px; }
+  #lblInt { color: var(--intensity); text-align: right; padding-right: 8px; }
+</style>
+
+<main>
+  <h1>The Range Flip</h1>
+  <p class="sub">What <code>range_to_intensity</code> in <span class="mono">detect.py</span> is actually doing, and why the two special cases exist.</p>
+
+  <h2><span class="step">01</span>The problem: your sensor speaks upside-down</h2>
+  <p>CFAR hunts for <strong>peaks</strong> — cells whose value sticks up above their neighbours. But a rangefinder reports <em>distance</em>, so the most interesting thing in the room (a person standing close) produces the <strong>smallest</strong> number. Targets are valleys, not peaks.</p>
+
+  <figure>
+    <svg viewBox="0 0 760 480" role="img" aria-label="Two bar charts. Top: raw ranges across angle, where a person appears as a dip below the wall. Bottom: after the flip, the same person appears as a peak. A miss naively flipped would become a huge false peak.">
+      <g id="chartTop"></g>
+      <g id="chartBot"></g>
+    </svg>
+    <figcaption>One sweep, two views. Top: raw ranges — the wall reads ~3&nbsp;m everywhere, the person is a <em>dip</em> to ~1.2&nbsp;m, and one angle missed entirely (−1.0). Bottom: after <span class="mono">intensity = max_range − range</span> the person becomes a clean <em>peak</em> CFAR can threshold. The dashed red bar is what happens if you flip a miss naively: 4.0&nbsp;−&nbsp;(−1.0)&nbsp;=&nbsp;5.0 — the "strongest target" in the room would be <em>nothing at all</em>. That's why rule&nbsp;1 forces misses to 0.</figcaption>
+  </figure>
+
+  <h2><span class="step">02</span>The flip: range and intensity share one ruler</h2>
+  <p>Fix the sensor ceiling at <code>max_range = 4.0 m</code>. Any reading splits that ruler in two: the part the echo travelled (<span style="color:var(--range);font-weight:600">range</span>) and the part left over (<span style="color:var(--intensity);font-weight:600">intensity</span>). They always sum to 4.0 — intensity is just "how far <em>inside</em> the ceiling this return landed."</p>
+
+  <div class="formula"><span class="i">intensity</span> = max_range − <span class="r">range</span></div>
+
+  <figure>
+    <svg viewBox="0 0 720 150" role="img" aria-label="A ruler from 0 to 4 metres. A reading at 1.2 metres splits it into a range segment of 1.2 and an intensity segment of 2.8; the two segments always sum to max_range.">
+      <!-- ruler baseline -->
+      <line x1="60" y1="100" x2="660" y2="100" stroke="currentColor" stroke-width="1.5"/>
+      <!-- ticks 0..4 (150px per metre) -->
+      <g stroke="currentColor" stroke-width="1" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+        <line x1="60"  y1="100" x2="60"  y2="110"/><text x="60"  y="126" text-anchor="middle">0 m</text>
+        <line x1="210" y1="100" x2="210" y2="110"/><text x="210" y="126" text-anchor="middle">1</text>
+        <line x1="360" y1="100" x2="360" y2="110"/><text x="360" y="126" text-anchor="middle">2</text>
+        <line x1="510" y1="100" x2="510" y2="110"/><text x="510" y="126" text-anchor="middle">3</text>
+        <line x1="660" y1="100" x2="660" y2="110"/><text x="660" y="126" text-anchor="middle">4 m = max_range</text>
+      </g>
+      <!-- range segment: 0 to 1.2m = x 60..240 -->
+      <rect x="60" y="82" width="180" height="18" fill="var(--range-soft)"/>
+      <line x1="60" y1="91" x2="240" y2="91" stroke="var(--range)" stroke-width="3"/>
+      <!-- intensity segment: 1.2 to 4m = x 240..660 -->
+      <rect x="240" y="82" width="420" height="18" fill="var(--intensity-soft)"/>
+      <line x1="240" y1="91" x2="660" y2="91" stroke="var(--intensity)" stroke-width="3"/>
+      <!-- the reading marker -->
+      <line x1="240" y1="60" x2="240" y2="104" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <circle cx="240" cy="91" r="5" fill="var(--range)"/>
+      <text x="240" y="50" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">echo at 1.2 m</text>
+      <!-- segment labels -->
+      <text x="150" y="72" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--range)">range = 1.2</text>
+      <text x="450" y="72" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="var(--intensity)">intensity = 4.0 − 1.2 = 2.8</text>
+    </svg>
+    <figcaption>The closer the object, the shorter the orange piece — and the longer the teal piece. "Unusually close" becomes "unusually big," which is exactly the shape CFAR knows how to threshold.</figcaption>
+  </figure>
+
+  <h2><span class="step">03</span>The three cases</h2>
+  <p>The formula only applies in the middle of the ruler. Off either end, the answer is forced to <code>0.0</code> — for two different reasons.</p>
+
+  <div class="cases">
+    <div class="case bad">
+      <span class="tag">range &lt; 0 · miss</span>
+      <span class="mono">−1.0</span> → <span class="out">0.0</span>
+      <p>The sensor saw <em>nothing</em>. Naive flip gives 5.0, a monster false target. Absence of evidence maps to zero intensity.</p>
+    </div>
+    <div class="case ok">
+      <span class="tag">0 ≤ range ≤ max</span>
+      <span class="mono">0.5</span> → <span class="out">3.5</span>
+      <p>The real formula: <span class="mono">max_range − range</span>. Close return, big intensity.</p>
+    </div>
+    <div class="case bad">
+      <span class="tag">range &gt; max · clamp</span>
+      <span class="mono">4.7</span> → <span class="out">0.0</span>
+      <p>Naive flip goes <em>negative</em> (−0.7). Beyond the ceiling there's nothing to detect, so clamp to zero.</p>
+    </div>
+  </div>
+
+  <h2><span class="step">04</span>Try it</h2>
+  <p>Drag the reading across the sensor's whole output space — including the illegal ends — and watch which case fires.</p>
+
+  <div class="widget">
+    <label for="rIn">simulated sensor reading (metres) — slide below 0 for a miss, past 4 for out-of-range</label>
+    <input type="range" id="rIn" min="-1" max="5" step="0.1" value="1.2">
+    <div class="readout">
+      <div><span class="k">range in</span><span class="v" id="rOut" style="color:var(--range)">1.2 m</span></div>
+      <div><span class="k">intensity out</span><span class="v" id="iOut" style="color:var(--intensity)">2.8</span></div>
+      <div style="flex:1;min-width:220px"><span class="k">which rule fired</span><span class="v" id="caseOut">formula: 4.0 − 1.2</span></div>
+    </div>
+    <div class="track">
+      <div class="seg" id="segRange"></div>
+      <div class="seg" id="segInt"></div>
+      <span class="lbl" id="lblRange">range</span>
+      <span class="lbl" id="lblInt">intensity</span>
+    </div>
+  </div>
+
+  <h2><span class="step">05</span>So the three lines are…</h2>
+  <p>Conceptually: <strong>flip everything</strong>, then <strong>zero out both illegal ends</strong>. In numpy that's the subtraction, plus one masking step that sends misses and beyond-ceiling readings to 0.0 (have a look at <code>np.where</code> or <code>np.clip</code> — mind that a miss must not go through the subtraction first and survive). The doctest in the docstring is your check: <span class="mono">[−1.0, 0.5, 3.5] → [0.0, 3.5, 0.5]</span>.</p>
+</main>
+
+<script>
+(function () {
+  var MAX = 4.0;
+
+  // ---- sweep charts ----
+  var angles = [-45,-40,-35,-30,-25,-20,-15,-10,-5,0,5,10,15,20,25,30,35,40,45];
+  var ranges = [3.2, 3.1, 3.3, 3.0, 3.2, 3.1, 3.3, 2.9, 1.4, 1.2, 1.3, 3.0, 3.2, 3.1, -1.0, 3.3, 3.0, 3.2, 3.1];
+
+  var left = 70, chartW = 660, barGap = 6;
+  var barW = (chartW - barGap * (angles.length - 1)) / angles.length;
+  var css = function (v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); };
+
+  function el(name, attrs, text) {
+    var e = document.createElementNS('http://www.w3.org/2000/svg', name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text) e.textContent = text;
+    return e;
+  }
+
+  function drawChart(gId, values, opts) {
+    var g = document.getElementById(gId);
+    g.textContent = '';
+    var top = opts.top, h = opts.h, yMax = opts.yMax;
+    var y = function (v) { return top + h - (v / yMax) * h; };
+
+    // gridlines + axis labels
+    for (var t = 0; t <= yMax; t++) {
+      g.appendChild(el('line', { x1: left, y1: y(t), x2: left + chartW, y2: y(t), stroke: 'var(--grid)', 'stroke-width': 1 }));
+      g.appendChild(el('text', { x: left - 8, y: y(t) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)', 'font-family': 'IBM Plex Mono, monospace' }, t + (t === yMax ? ' ' + opts.unit : '')));
+    }
+    // title
+    g.appendChild(el('text', { x: left, y: top - 10, 'font-size': 13, 'font-weight': 600, fill: 'currentColor', 'font-family': 'IBM Plex Sans, sans-serif' }, opts.title));
+
+    values.forEach(function (v, i) {
+      var x = left + i * (barW + barGap);
+      if (v === null) {  // miss cell
+        // naive-flip ghost (only on intensity chart)
+        if (opts.ghost) {
+          g.appendChild(el('rect', { x: x, y: y(5.0), width: barW, height: h * (5.0 / yMax), fill: 'var(--miss-soft)', stroke: 'var(--miss)', 'stroke-width': 1.5, 'stroke-dasharray': '4 3' }));
+          g.appendChild(el('text', { x: x + barW / 2, y: y(5.0) - 6, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--miss)', 'font-family': 'IBM Plex Mono, monospace' }, opts.ghostLabel));
+        } else {
+          g.appendChild(el('text', { x: x + barW / 2, y: y(0) - 6, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--miss)', 'font-family': 'IBM Plex Mono, monospace' }, 'miss'));
+          g.appendChild(el('text', { x: x + barW / 2, y: y(0) + 14 + 6, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--miss)', 'font-family': 'IBM Plex Mono, monospace' }, '−1.0'));
+        }
+        return;
+      }
+      var isTarget = opts.targetIdx.indexOf(i) >= 0;
+      var color = isTarget ? opts.hi : opts.lo;
+      g.appendChild(el('rect', { x: x, y: y(v), width: barW, height: h - (y(v) - top), fill: color, rx: 1.5 }));
+    });
+
+    // corrected zero marker on intensity chart
+    if (opts.ghost) {
+      var xm = left + opts.missIdx * (barW + barGap);
+      g.appendChild(el('line', { x1: xm, y1: y(0), x2: xm + barW, y2: y(0), stroke: 'var(--intensity)', 'stroke-width': 3 }));
+      g.appendChild(el('text', { x: xm + barW / 2, y: y(0) + 16, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--intensity)', 'font-family': 'IBM Plex Mono, monospace' }, 'rule 1: 0.0'));
+    }
+
+    // x axis
+    g.appendChild(el('line', { x1: left, y1: y(0), x2: left + chartW, y2: y(0), stroke: 'currentColor', 'stroke-width': 1.2 }));
+    // a few angle labels
+    [0, 4, 9, 14, 18].forEach(function (i) {
+      g.appendChild(el('text', { x: left + i * (barW + barGap) + barW / 2, y: y(0) + 16, 'text-anchor': 'middle', 'font-size': 10.5, fill: 'var(--muted)', 'font-family': 'IBM Plex Mono, monospace' }, angles[i] + '°'));
+    });
+    if (opts.annot) {
+      var xi = left + 9 * (barW + barGap) + barW / 2;
+      g.appendChild(el('text', { x: xi, y: opts.annot.y, 'text-anchor': 'middle', 'font-size': 11.5, fill: opts.annot.color, 'font-family': 'IBM Plex Sans, sans-serif', 'font-weight': 600 }, opts.annot.text));
+    }
+  }
+
+  var missIdx = ranges.indexOf(-1.0);
+  var rangeVals = ranges.map(function (r) { return r < 0 ? null : r; });
+  var intVals = ranges.map(function (r) { return (r < 0 || r > MAX) ? null : MAX - r; });
+  var targetIdx = [8, 9, 10];
+
+  drawChart('chartTop', rangeVals, {
+    top: 40, h: 150, yMax: 4, unit: 'm', title: 'What the sensor gives you — range vs angle (target = dip)',
+    lo: 'var(--range)', hi: 'var(--range)', targetIdx: [], missIdx: missIdx,
+    annot: { y: 40 + 150 - (1.2 / 4) * 150 - 10, color: css('--range') || '#B06A1F', text: 'person ↓' }
+  });
+  drawChart('chartBot', intVals, {
+    top: 290, h: 150, yMax: 5, unit: '', title: 'What CFAR wants — intensity = max_range − range (target = peak)',
+    lo: 'var(--line)', hi: 'var(--intensity)', targetIdx: targetIdx,
+    missIdx: missIdx, ghost: true, ghostLabel: 'naive: 5.0!'
+  });
+
+  // ---- interactive widget ----
+  var rIn = document.getElementById('rIn');
+  function update() {
+    var r = parseFloat(rIn.value);
+    document.getElementById('rOut').textContent = r.toFixed(1) + ' m';
+    var iOut = document.getElementById('iOut'), caseOut = document.getElementById('caseOut');
+    var segR = document.getElementById('segRange'), segI = document.getElementById('segInt');
+    var lblR = document.getElementById('lblRange'), lblI = document.getElementById('lblInt');
+
+    if (r < 0) {
+      iOut.textContent = '0.0';
+      caseOut.textContent = 'rule 1 — miss → 0.0';
+      caseOut.style.color = 'var(--miss)';
+      segR.style.width = '0%'; segI.style.width = '0%';
+      lblR.textContent = 'no echo — nothing to flip'; lblR.style.color = 'var(--miss)';
+      lblI.textContent = '';
+    } else if (r > MAX) {
+      iOut.textContent = '0.0';
+      caseOut.textContent = 'rule 2 — beyond ceiling → 0.0';
+      caseOut.style.color = 'var(--miss)';
+      segR.style.width = '100%'; segI.style.width = '0%';
+      lblR.textContent = 'range ≥ max_range'; lblR.style.color = 'var(--miss)';
+      lblI.textContent = '';
+    } else {
+      var it = MAX - r;
+      iOut.textContent = it.toFixed(1);
+      caseOut.textContent = 'formula: ' + MAX.toFixed(1) + ' − ' + r.toFixed(1);
+      caseOut.style.color = 'var(--intensity)';
+      var pct = (r / MAX) * 100;
+      segR.style.width = pct + '%';
+      segI.style.width = (100 - pct) + '%';
+      lblR.textContent = 'range ' + r.toFixed(1); lblR.style.color = 'var(--range)';
+      lblI.textContent = 'intensity ' + it.toFixed(1);
+      lblI.style.right = '0'; lblI.style.width = (100 - pct) + '%';
+    }
+  }
+  rIn.addEventListener('input', update);
+  update();
+
+  // redraw charts on theme flip so resolved CSS vars used in annotations refresh
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+      drawChart('chartTop', rangeVals, {
+        top: 40, h: 150, yMax: 4, unit: 'm', title: 'What the sensor gives you — range vs angle (target = dip)',
+        lo: 'var(--range)', hi: 'var(--range)', targetIdx: [], missIdx: missIdx,
+        annot: { y: 40 + 150 - (1.2 / 4) * 150 - 10, color: css('--range') || '#B06A1F', text: 'person ↓' }
+      });
+      drawChart('chartBot', intVals, {
+        top: 290, h: 150, yMax: 5, unit: '', title: 'What CFAR wants — intensity = max_range − range (target = peak)',
+        lo: 'var(--line)', hi: 'var(--intensity)', targetIdx: targetIdx,
+        missIdx: missIdx, ghost: true, ghostLabel: 'naive: 5.0!'
+      });
+    });
+  }
+})();
+</script>
+
+</body></html>

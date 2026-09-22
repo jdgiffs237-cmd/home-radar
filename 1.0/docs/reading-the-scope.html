@@ -1,0 +1,208 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/code/artifact/007d5de5-996b-479a-a5ac-871889ffb551 -->
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Reading the Scope</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #eef1ea; --panel: #f7f9f4; --panel2: #e4e9df; --line: #cdd6c6;
+    --ink: #1e281e; --muted: #5c6b58;
+    --accent: #256e33; --accent-soft: #dcead9;
+    --amber: #8a5a00; --amber-soft: #f2e5c8;
+    --scope-bg: #06120a; --scope-grid: #1d4a2a; --scope-glow: #52d96d;
+    --scope-dim: #2e7a41; --scope-hot: #b8f5c4; --scope-note: #8fd99e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+      --ink: #cfe0c6; --muted: #7e937a;
+      --accent: #4fc763; --accent-soft: #16301a;
+      --amber: #e0a93f; --amber-soft: #2e2410;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+    --ink: #cfe0c6; --muted: #7e937a;
+    --accent: #4fc763; --accent-soft: #16301a;
+    --amber: #e0a93f; --amber-soft: #2e2410;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 15.5px; line-height: 1.6; margin: 0; padding: 28px 18px 72px;
+  }
+  .wrap { max-width: 840px; margin: 0 auto; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: "Chakra Petch", sans-serif; font-size: clamp(26px, 5vw, 36px);
+    font-weight: 700; margin: 2px 0 4px; text-wrap: balance;
+  }
+  .sub { color: var(--muted); max-width: 62ch; margin: 0 0 22px; }
+  section {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px 22px; margin-bottom: 18px;
+  }
+  h2 {
+    font-family: "Chakra Petch", sans-serif; font-size: 18px; font-weight: 600;
+    margin: 0 0 10px;
+  }
+  p { max-width: 68ch; margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 20px; }
+  li { margin-bottom: 8px; max-width: 64ch; }
+  code {
+    font-family: "IBM Plex Mono", monospace; font-size: .9em;
+    background: var(--panel2); border: 1px solid var(--line);
+    padding: 1px 6px; border-radius: 4px;
+  }
+  .tip {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    border-radius: 0 8px 8px 0; padding: 9px 13px; margin: 12px 0; font-size: 14px;
+  }
+  figure { margin: 6px 0 4px; overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 10px; max-width: 68ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px 22px; margin-top: 12px; font-size: 14px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">home-radar · field manual</div>
+    <h1>Reading the Scope</h1>
+    <p class="sub">The green half-circle is a map of your room, drawn from above,
+      with you at the bottom. Here's every mark on it, decoded.</p>
+  </header>
+
+  <section>
+    <h2>The display, annotated</h2>
+    <figure>
+      <svg viewBox="0 0 780 520" role="img" aria-label="Annotated radar PPI scope: a dark half-circle with the sensor at bottom center, range rings at one-metre steps, a wall painted as an arc near 3 metres, a bright target blip at 1.2 metres, a dark unexplored wedge, and the beam line showing where the head points now.">
+        <!-- scope face -->
+        <rect x="20" y="20" width="740" height="430" rx="10" fill="var(--scope-bg)"/>
+        <!-- half circle, center (390,420), R=340 -->
+        <path d="M 50 420 A 340 340 0 0 1 730 420 Z" fill="none" stroke="var(--scope-grid)" stroke-width="1.5"/>
+        <!-- range rings 1..3m (85px per m) -->
+        <path d="M 305 420 A 85 85 0 0 1 475 420" fill="none" stroke="var(--scope-grid)" stroke-width="1"/>
+        <path d="M 220 420 A 170 170 0 0 1 560 420" fill="none" stroke="var(--scope-grid)" stroke-width="1"/>
+        <path d="M 135 420 A 255 255 0 0 1 645 420" fill="none" stroke="var(--scope-grid)" stroke-width="1"/>
+        <!-- spoke lines every 45deg -->
+        <line x1="390" y1="420" x2="50" y2="420" stroke="var(--scope-grid)" stroke-width="1"/>
+        <line x1="390" y1="420" x2="730" y2="420" stroke="var(--scope-grid)" stroke-width="1"/>
+        <line x1="390" y1="420" x2="149.6" y2="179.6" stroke="var(--scope-grid)" stroke-width="1"/>
+        <line x1="390" y1="420" x2="390" y2="80" stroke="var(--scope-grid)" stroke-width="1"/>
+        <line x1="390" y1="420" x2="630.4" y2="179.6" stroke="var(--scope-grid)" stroke-width="1"/>
+        <!-- ring labels -->
+        <g font-family="IBM Plex Mono, monospace" font-size="11" fill="var(--scope-dim)">
+          <text x="480" y="414">1 m</text>
+          <text x="565" y="414">2 m</text>
+          <text x="650" y="414">3 m</text>
+          <text x="712" y="414">4 m</text>
+          <text x="736" y="440" text-anchor="end">0°</text>
+          <text x="390" y="70" text-anchor="middle">90°</text>
+          <text x="46" y="440">180°</text>
+        </g>
+
+        <!-- wall: arc of dots near 2.9-3.1m from 20deg to 120deg -->
+        <g fill="var(--scope-glow)">
+          <circle cx="629" cy="333" r="4"/>
+          <circle cx="611" cy="300" r="4"/>
+          <circle cx="586" cy="262" r="4"/>
+          <circle cx="550" cy="227" r="4"/>
+          <circle cx="514" cy="204" r="4"/>
+          <circle cx="474" cy="185" r="4"/>
+          <circle cx="434" cy="168" r="4"/>
+          <circle cx="390" cy="165" r="4"/>
+          <circle cx="345" cy="170" r="4"/>
+          <circle cx="302" cy="186" r="4"/>
+        </g>
+
+        <!-- target blip at ~65deg, 1.2m (102px) -->
+        <circle cx="347" cy="328" r="7" fill="var(--scope-hot)"/>
+        <circle cx="347" cy="328" r="13" fill="none" stroke="var(--scope-hot)" stroke-width="1.5" opacity="0.55"/>
+
+        <!-- beam line at ~65 deg -->
+        <line x1="390" y1="420" x2="246" y2="112" stroke="var(--scope-glow)" stroke-width="2" opacity="0.8"/>
+
+        <!-- unexplored wedge 130-180deg -->
+        <path d="M 390 420 L 50 420 A 340 340 0 0 1 171.4 159.6 Z" fill="var(--scope-grid)" opacity="0.25"/>
+
+        <!-- sensor marker -->
+        <circle cx="390" cy="420" r="6" fill="var(--scope-glow)"/>
+
+        <!-- annotations on scope -->
+        <g font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600">
+          <text x="600" y="238" fill="var(--scope-note)">the wall (an arc of echoes)</text>
+          <line x1="596" y1="242" x2="556" y2="230" stroke="var(--scope-note)" stroke-width="1"/>
+          <text x="238" y="345" fill="var(--scope-hot)" text-anchor="end">something closer</text>
+          <text x="238" y="360" fill="var(--scope-hot)" text-anchor="end">than the wall = target</text>
+          <line x1="243" y1="348" x2="334" y2="330" stroke="var(--scope-hot)" stroke-width="1"/>
+          <text x="180" y="110" fill="var(--scope-glow)">beam points here NOW</text>
+          <line x1="230" y1="115" x2="252" y2="124" stroke="var(--scope-glow)" stroke-width="1"/>
+          <text x="96" y="300" fill="var(--scope-dim)">dark = not painted</text>
+          <text x="96" y="315" fill="var(--scope-dim)">yet (or a miss)</text>
+          <text x="390" y="443" fill="var(--scope-note)" text-anchor="middle">YOU (the sensor) are here</text>
+        </g>
+      </svg>
+      <figcaption>A bird's-eye map: the sensor sits at the bottom center, bearing sweeps
+        0°–180° around the arc, and distance grows outward one ring per metre. Everything
+        on the glass is an echo the sensor heard at that bearing and range.</figcaption>
+    </figure>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--scope-glow)"></span>echo (something there)</span>
+      <span><span class="sw" style="background:var(--scope-hot)"></span>strong / near return</span>
+      <span><span class="sw" style="background:var(--scope-grid)"></span>empty or unexplored</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>The five rules</h2>
+    <ol>
+      <li><strong>You are the bottom-center dot.</strong> The scope is your room from
+        above; straight up on screen is straight ahead of the sensor (90°).</li>
+      <li><strong>Out = away.</strong> Each ring is one metre. A dot on the third ring
+        is something 3 m from the sensor at that bearing.</li>
+      <li><strong>The long arc is your wall.</strong> A wall returns at every bearing,
+        so it paints as a broad arc. It's the permanent scenery — radar people call
+        it clutter.</li>
+      <li><strong>A target is a dot inside the wall's arc.</strong> Something closer
+        than the scenery at that bearing. Hold your hand in front of the sensor and
+        a fresh dot appears well inside the arc.</li>
+      <li><strong>Dark wedges are the unknown, not the empty.</strong> With the joystick
+        firmware, a bearing stays dark until you steer the beam across it — and it
+        shows the <em>last</em> echo until you revisit. If something moved since you
+        looked, the scope is showing a memory. Steering back refreshes it.</li>
+    </ol>
+    <div class="tip"><strong>The beam is wide.</strong> The HC-SR04 hears a ~30° cone,
+      so one object smears across several neighbouring bearings — your hand paints a
+      short arc, not a single dot. That's physics, not a bug (and it's why the VL53L0X
+      laser upgrade exists).</div>
+  </section>
+
+  <section>
+    <h2>Three experiments to make it click</h2>
+    <ol>
+      <li><strong>Paint the room.</strong> Hold the stick gently to one side and let the
+        beam crawl the full 0°–180°. Watch the wall's arc assemble dot by dot. That arc
+        is a floor plan you just drew with sound.</li>
+      <li><strong>Be the target.</strong> Steer to center, hold your palm ~40 cm in
+        front, and watch a bright dot appear far inside the wall. Move your hand out
+        slowly — the dot slides outward ring by ring.</li>
+      <li><strong>Catch the scope lying.</strong> Paint your hand at one bearing, then
+        pull your hand away <em>without</em> moving the stick off to that side again.
+        The dot stays — a ghost of where your hand was. Steer across it and it clears.
+        You've just experienced <em>revisit time</em>, a real problem real radar
+        operators manage.</li>
+    </ol>
+    <p>When the auto-sweep firmware (<code>radar_sweep.ino</code>) is loaded instead,
+      the servo does the painting for you, the whole picture refreshes every couple of
+      seconds, and no wedge stays stale for long — that's the trade: the machine sweeps
+      everywhere slowly, your thumb looks anywhere instantly.</p>
+  </section>
+</div>
+
+</body></html>

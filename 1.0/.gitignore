@@ -1,5 +1,5 @@
 # personal -- purchase records and invoices carry name/address; keep them local
-**/receipts/
+receipts/
 
 # python
 __pycache__/
@@ -9,16 +9,18 @@ __pycache__/
 venv/
 
 # recorded sensor sessions can get big; commit them deliberately if wanted
-**/data/*.log
+data/*.log
+
+# images are generated output, except the ones the docs use
+*.png
+!docs/**/*.png
 
 # personal build photos / videos -- keep them local, they show the room
 *.jpg
 *.jpeg
-*.png
 *.mov
 *.mp4
-!**/docs/**/*.jpg
-!**/docs/**/*.png
+!docs/**/*.jpg
 
 # editor / os noise
 .vscode/

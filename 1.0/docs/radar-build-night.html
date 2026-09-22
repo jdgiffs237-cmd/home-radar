@@ -1,0 +1,306 @@
+<!-- Live online version (may be newer than this local copy): https://claude.ai/code/artifact/bfd45120-1e66-489a-90c5-fde81331c403 -->
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style></head><body>
+<title>Radar Build Night</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #eef1ea;
+    --panel: #f7f9f4;
+    --panel2: #e4e9df;
+    --line: #cdd6c6;
+    --ink: #1e281e;
+    --muted: #5c6b58;
+    --accent: #256e33;
+    --accent-soft: #dcead9;
+    --amber: #8a5a00;
+    --amber-soft: #f2e5c8;
+    --red: #a03c2a;
+    --red-soft: #f0ddd6;
+    --w-5v: #c23a28;
+    --w-gnd: #6b6b6b;
+    --w-sig: #b06a1f;
+    --w-trig: #2563c7;
+    --w-echo: #7c4dbe;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+      --ink: #cfe0c6; --muted: #7e937a;
+      --accent: #4fc763; --accent-soft: #16301a;
+      --amber: #e0a93f; --amber-soft: #2e2410;
+      --red: #e0705c; --red-soft: #331812;
+      --w-5v: #e0604c; --w-gnd: #9a9a9a; --w-sig: #d89a54;
+      --w-trig: #6d9eec; --w-echo: #a983e0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b110b; --panel: #121a12; --panel2: #0e150e; --line: #24331f;
+    --ink: #cfe0c6; --muted: #7e937a;
+    --accent: #4fc763; --accent-soft: #16301a;
+    --amber: #e0a93f; --amber-soft: #2e2410;
+    --red: #e0705c; --red-soft: #331812;
+    --w-5v: #e0604c; --w-gnd: #9a9a9a; --w-sig: #d89a54;
+    --w-trig: #6d9eec; --w-echo: #a983e0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 15.5px; line-height: 1.6;
+    margin: 0; padding: 28px 18px 72px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: "Chakra Petch", sans-serif; font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700; margin: 2px 0 4px; text-wrap: balance;
+  }
+  .sub { color: var(--muted); max-width: 62ch; margin: 0 0 10px; }
+  .setaside {
+    border: 1px solid var(--amber); background: var(--amber-soft); color: var(--ink);
+    border-radius: 9px; padding: 10px 14px; margin: 16px 0 28px; font-size: 14.5px;
+  }
+  .setaside strong { color: var(--amber); }
+
+  section.step {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px 22px; margin-bottom: 18px;
+  }
+  section.step.done-step { border-color: var(--accent); }
+  h2 {
+    font-family: "Chakra Petch", sans-serif; font-size: 19px; font-weight: 600;
+    margin: 0 0 10px; display: flex; align-items: center; gap: 12px;
+  }
+  h2 label { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  h2 input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
+  .done-step h2 .t { color: var(--accent); text-decoration: line-through; text-decoration-thickness: 1px; }
+  p { max-width: 68ch; margin: 0 0 12px; }
+  code {
+    font-family: "IBM Plex Mono", monospace; font-size: .9em;
+    background: var(--panel2); border: 1px solid var(--line);
+    padding: 1px 6px; border-radius: 4px;
+  }
+  pre {
+    font-family: "IBM Plex Mono", monospace; font-size: 13.5px; line-height: 1.5;
+    background: var(--panel2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; overflow-x: auto; margin: 12px 0;
+  }
+  pre b { color: var(--accent); font-weight: 600; }
+  ul { margin: 0 0 12px; padding-left: 20px; }
+  li { margin-bottom: 6px; max-width: 64ch; }
+  .tip {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    border-radius: 0 8px 8px 0; padding: 9px 13px; margin: 12px 0; font-size: 14px;
+  }
+  .warn {
+    border-left: 3px solid var(--red); background: var(--red-soft);
+    border-radius: 0 8px 8px 0; padding: 9px 13px; margin: 12px 0; font-size: 14px;
+  }
+  a { color: var(--accent); font-weight: 600; }
+  a:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  figure { margin: 14px 0 4px; }
+  figure svg { display: block; max-width: 100%; height: auto; }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 8px; max-width: 68ch; }
+  .fig-scroll { overflow-x: auto; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  .tbl-scroll { overflow-x: auto; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: "IBM Plex Mono", monospace; font-size: 11.5px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  }
+  td:first-child { font-weight: 600; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">home-radar · phase 1 · the build</div>
+    <h1>Radar Build Night</h1>
+    <p class="sub">Five steps from a box of parts to your room on a radar scope.
+      Tick each step as you land it — this page remembers where you are.</p>
+    <div class="setaside"><strong>Set the VL53L0X aside tonight.</strong>
+      The wiring and firmware below are for the ultrasonic sensor. The laser is the
+      upgrade we do after the basic radar works — it gets its own evening.</div>
+  </header>
+
+  <section class="step" id="s1">
+    <h2><label><input type="checkbox" data-step="s1"><span class="t">1 · Wire it</span></label></h2>
+    <p>Use the male-to-female jumper wires from the kit (pin on one end, socket on the
+      other). Every wire below plugs a module pin straight to an Arduino header pin —
+      no breadboard needed for v1.</p>
+
+    <figure class="fig-scroll">
+      <svg viewBox="0 0 760 430" role="img" aria-label="Wiring diagram: HC-SR04 sensor pins VCC, TRIG, ECHO, GND connect to Arduino 5V, D10, D11 and GND. SG90 servo wires brown, red, orange connect to GND, 5V and D9.">
+        <!-- HC-SR04 -->
+        <rect x="60" y="55" width="185" height="95" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="108" cy="102" r="27" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="197" cy="102" r="27" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="108" cy="102" r="16" fill="none" stroke="currentColor" stroke-width="1"/>
+        <circle cx="197" cy="102" r="16" fill="none" stroke="currentColor" stroke-width="1"/>
+        <text x="152" y="45" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="14" font-weight="600" fill="currentColor">HC-SR04</text>
+        <!-- sensor pins -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5">
+          <rect x="97"  y="150" width="7" height="7" fill="var(--w-5v)"/>
+          <rect x="127" y="150" width="7" height="7" fill="var(--w-trig)"/>
+          <rect x="157" y="150" width="7" height="7" fill="var(--w-echo)"/>
+          <rect x="187" y="150" width="7" height="7" fill="var(--w-gnd)"/>
+          <text x="100" y="172" fill="var(--w-5v)"  transform="rotate(45 100 172)">VCC</text>
+          <text x="130" y="172" fill="var(--w-trig)" transform="rotate(45 130 172)">TRIG</text>
+          <text x="160" y="172" fill="var(--w-echo)" transform="rotate(45 160 172)">ECHO</text>
+          <text x="190" y="172" fill="var(--w-gnd)" transform="rotate(45 190 172)">GND</text>
+        </g>
+
+        <!-- SG90 servo -->
+        <rect x="545" y="65" width="135" height="85" rx="6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <rect x="595" y="45" width="14" height="20" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <line x1="602" y1="45" x2="640" y2="30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <text x="612" y="110" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="14" font-weight="600" fill="currentColor">SG90 servo</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5">
+          <rect x="571" y="150" width="7" height="7" fill="var(--w-gnd)"/>
+          <rect x="601" y="150" width="7" height="7" fill="var(--w-5v)"/>
+          <rect x="631" y="150" width="7" height="7" fill="var(--w-sig)"/>
+          <text x="574" y="172" fill="var(--w-gnd)" transform="rotate(45 574 172)">brown</text>
+          <text x="604" y="172" fill="var(--w-5v)" transform="rotate(45 604 172)">red</text>
+          <text x="634" y="172" fill="var(--w-sig)" transform="rotate(45 634 172)">orange</text>
+        </g>
+
+        <!-- Arduino -->
+        <rect x="280" y="280" width="200" height="110" rx="8" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <text x="380" y="345" text-anchor="middle" font-family="Chakra Petch, sans-serif" font-size="16" font-weight="600" fill="currentColor">Arduino Uno</text>
+        <text x="380" y="365" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity="0.75">USB → PC</text>
+        <!-- header pins on top edge -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600">
+          <rect x="296" y="276" width="8" height="8" fill="var(--w-5v)"/>
+          <rect x="326" y="276" width="8" height="8" fill="var(--w-gnd)"/>
+          <rect x="376" y="276" width="8" height="8" fill="var(--w-sig)"/>
+          <rect x="406" y="276" width="8" height="8" fill="var(--w-trig)"/>
+          <rect x="436" y="276" width="8" height="8" fill="var(--w-echo)"/>
+          <text x="300" y="300" text-anchor="middle" fill="var(--w-5v)">5V</text>
+          <text x="330" y="300" text-anchor="middle" fill="var(--w-gnd)">GND</text>
+          <text x="380" y="300" text-anchor="middle" fill="var(--w-sig)">D9</text>
+          <text x="410" y="300" text-anchor="middle" fill="var(--w-trig)">D10</text>
+          <text x="440" y="300" text-anchor="middle" fill="var(--w-echo)">D11</text>
+        </g>
+
+        <!-- wires: sensor side -->
+        <polyline points="160,157 160,218 440,218 440,276" fill="none" stroke="var(--w-echo)" stroke-width="2.6"/>
+        <polyline points="130,157 130,233 410,233 410,276" fill="none" stroke="var(--w-trig)" stroke-width="2.6"/>
+        <polyline points="190,157 190,248 330,248 330,276" fill="none" stroke="var(--w-gnd)" stroke-width="2.6"/>
+        <polyline points="100,157 100,263 300,263 300,276" fill="none" stroke="var(--w-5v)" stroke-width="2.6"/>
+        <!-- wires: servo side -->
+        <polyline points="634,157 634,225 380,225 380,276" fill="none" stroke="var(--w-sig)" stroke-width="2.6"/>
+        <polyline points="574,157 574,248 330,248 330,276" fill="none" stroke="var(--w-gnd)" stroke-width="2.6"/>
+        <polyline points="604,157 604,263 300,263 300,276" fill="none" stroke="var(--w-5v)" stroke-width="2.6"/>
+
+        <!-- wire labels -->
+        <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600">
+          <text x="252" y="214" fill="var(--w-echo)">ECHO → D11</text>
+          <text x="252" y="245" fill="var(--w-trig)" transform="translate(0,-16)">TRIG → D10</text>
+          <text x="480" y="221" fill="var(--w-sig)">orange → D9</text>
+          <text x="415" y="260" fill="var(--w-gnd)">grounds share GND</text>
+          <text x="415" y="275" fill="var(--w-5v)">power shares 5V</text>
+        </g>
+      </svg>
+      <figcaption>Both red wires land on the one 5V pin and both ground wires on a GND pin
+        (the Uno has three GND pins — any of them). The three signal wires each get their
+        own numbered pin: servo orange to D9, TRIG to D10, ECHO to D11.</figcaption>
+    </figure>
+    <div class="warn"><strong>The classic mistake:</strong> TRIG and ECHO swapped. Everything
+      powers up, the servo sweeps happily, and every range reads 0 or max. If that's your
+      symptom later, swap these two wires first.</div>
+  </section>
+
+  <section class="step" id="s2">
+    <h2><label><input type="checkbox" data-step="s2"><span class="t">2 · Mount it</span></label></h2>
+    <ul>
+      <li>Tape the sensor to the servo's plastic arm (the "horn"), eyes facing outward.</li>
+      <li>Tape the servo body to something heavy — a book, a mug of coins. Tape is genuinely the right tool for v1.</li>
+      <li>Keep the sensor centered <em>over</em> the servo's spin axis, not hanging out in front — an offset bends every range reading.</li>
+      <li>Clear 20&nbsp;cm in front of the sensor: no cables, no desk edge, no servo wire drooping into view.</li>
+    </ul>
+  </section>
+
+  <section class="step" id="s3">
+    <h2><label><input type="checkbox" data-step="s3"><span class="t">3 · Flash the firmware</span></label></h2>
+    <ul>
+      <li>Install <a href="https://www.arduino.cc/en/software" target="_blank" rel="noopener">Arduino IDE 2</a> (free).</li>
+      <li>Plug the Uno into USB, open <code>firmware/radar_sweep/radar_sweep.ino</code> from the project folder.</li>
+      <li>Tools → Board → <strong>Arduino Uno</strong>. Tools → Port → the COM port that appeared.</li>
+      <li>Hit the → Upload button. The board's lights flicker while it flashes.</li>
+    </ul>
+    <div class="tip"><strong>No COM port listed?</strong> Your board needs the CH340 USB driver —
+      a two-minute fix. Ask Claude and we'll sort it.</div>
+  </section>
+
+  <section class="step" id="s4">
+    <h2><label><input type="checkbox" data-step="s4"><span class="t">4 · First light</span></label></h2>
+    <p>Tools → Serial Monitor, set the speed to <strong>115200 baud</strong>. The servo starts
+      sweeping and lines scroll past:</p>
+<pre>
+# radar_sweep v1 fov=180 step=5 c=343.0
+S 0
+R 0 5 1.834      <b>← cell 0, angle 5°, echo at 1.83 m</b>
+R 1 10 1.821
+R 2 15 -1.000    <b>← -1 means no echo came back</b>
+...
+E 0 37
+</pre>
+    <p><strong>Now wave your hand in front of it</strong> and watch the numbers drop to your
+      hand's distance. That's the whole project in miniature: pulse out, echo back,
+      time-of-flight to range.</p>
+  </section>
+
+  <section class="step" id="s5">
+    <h2><label><input type="checkbox" data-step="s5"><span class="t">5 · Your room, on a scope</span></label></h2>
+    <p><strong>Close the Serial Monitor first</strong> — Windows gives one program the port at
+      a time, and Python can't open it while the IDE holds it. This catches everyone once.</p>
+<pre>
+python -m serial.tools.list_ports    <b>← find your COM number</b>
+python run_live.py --port COM3       <b>← swap in yours</b>
+</pre>
+    <p>Green sweeping scope, your actual desk and walls painted on it. Stand up, move around,
+      watch yourself appear.</p>
+  </section>
+
+  <section class="step" id="trouble">
+    <h2 style="margin-bottom:12px">When it misbehaves</h2>
+    <div class="tbl-scroll">
+    <table>
+      <tr><th>Symptom</th><th>Cause</th></tr>
+      <tr><td>All ranges read 0 or max</td><td>TRIG and ECHO wires swapped.</td></tr>
+      <tr><td>Board resets mid-sweep</td><td>Servo current spikes browning out USB power. Put one of the kit's electrolytic capacitors (100–470 µF) across the servo's red and brown wires — stripe side (−) to brown.</td></tr>
+      <tr><td>Every range 3–5% off</td><td>Speed of sound vs room temperature. Tune <code>SPEED_OF_SOUND</code> in <code>radar/config.py</code>.</td></tr>
+      <tr><td>Targets smeared across 20°</td><td>Partly the 30° beam (real life), partly pinging while the servo's still moving — raise <code>SERVO_SETTLE_MS</code>.</td></tr>
+      <tr><td>Ghost targets at fixed ranges</td><td>Last ping's echo off a far wall arriving during this ping. Ping interval too short.</td></tr>
+      <tr><td>Soft things invisible</td><td>Clothing eats ultrasound. Not a bug — hold up a book instead.</td></tr>
+      <tr><td>Nothing beyond ~2 m</td><td>Normal. The 4 m spec assumes a big flat wall dead ahead.</td></tr>
+    </table>
+    </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+// Per-device progress memory for the checkboxes.
+const KEY = "radar-build-night";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+document.querySelectorAll("input[data-step]").forEach(cb => {
+  const id = cb.dataset.step;
+  cb.checked = !!saved[id];
+  cb.closest("section").classList.toggle("done-step", cb.checked);
+  cb.addEventListener("change", () => {
+    saved[id] = cb.checked;
+    cb.closest("section").classList.toggle("done-step", cb.checked);
+    try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+  });
+});
+</script>
+
+</body></html>
